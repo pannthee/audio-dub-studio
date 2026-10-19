@@ -17,7 +17,7 @@ Pipeline:
       အကွက်သေးတွေကြောင့် အသံအရမ်းမြန်ရတာကို ကာကွယ်ဖို့
   3. Gemini နဲ့ သဘာဝကျတဲ့ ပြောစကားမြန်မာလို ဘာသာပြန်
   4. ပြန်စစ်ပြီး ပြင်လို့ရ (တစ်ကြောင်းချင်း)
-  5. edge-tts (my-MM-ThihaNeural) နဲ့ အသံထုတ် → အချိန်ကွက်အတိုင်း ချုံ့/ဖြန့်
+  5. TTS နဲ့ အသံထုတ် (🤖 Gemini / 🌐 Edge ရွေး) → အချိန်ကွက်အတိုင်း ချုံ့/ဖြန့်
   5b. (optional) အချိန်ကွက်ထဲ မဝင်တဲ့လိုင်း → Gemini နဲ့ အလိုအလျောက်တိုအောင်ပြင်
       → အသံပြန်ထုတ် (တစ်ကြိမ်သာ)
   6. ဗီဒီယိုအသစ်နဲ့ ပေါင်း → MP4 download + SRT download
@@ -285,6 +285,113 @@ def _set_voice_rate(mult):
         pct = 0
     pct = max(-50, min(50, pct))
     _VOICE_RATE = f"{pct:+d}%"
+
+
+# ------------------------------------------------- 🔊 TTS engine (gemini / edge)
+# Edge TTS (Microsoft) က 2026-10 မှာ v1 endpoint ကို 403 နဲ့ block စလုပ်လို့
+# default က Gemini TTS (ရှိပြီးသား API key ပဲ သုံး). Edge ကို phone relay နဲ့
+# သုံးနေရင် sidebar က ပြန်ရွေးလို့ရ.
+_TTS_ENGINE = "gemini"
+_GEMINI_TTS_KEY = ""
+_GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
+_GEMINI_TTS_VOICE = "Kore"
+_GEMINI_TTS_VOICES = ["Kore", "Charon", "Puck", "Fenrir", "Aoede",
+                      "Leda", "Callirrhoe", "Autonoe", "Enceladus", "Iapetus"]
+
+
+def _sync_tts_globals(engine_label, gemini_key, gemini_voice):
+    """sidebar widget values → module globals (TTS မခေါ်ခင် run တိုင်း sync)."""
+    global _TTS_ENGINE, _GEMINI_TTS_KEY, _GEMINI_TTS_VOICE
+    _TTS_ENGINE = "edge" if str(engine_label).startswith("🌐") else "gemini"
+    _GEMINI_TTS_KEY = (gemini_key or "").strip()
+    _GEMINI_TTS_VOICE = gemini_voice or "Kore"
+
+
+def _tts_voices(voice_primary, voice_fallback):
+    """engine အလိုက် စမ်းမယ့် voice list — gemini ဆို တစ်ခုတည်း."""
+    if _TTS_ENGINE == "gemini":
+        return (_GEMINI_TTS_VOICE,)
+    return (voice_primary, voice_fallback)
+
+
+def _gemini_tts_save(api_key, model_id, voice_name, text, path):
+    """Gemini TTS → base64 PCM (24kHz) → mp3 (ffmpeg). _edge_save လို atomic write.
+
+    429/5xx → backoff နဲ့ ၃ ကြိမ်အထိ retry.
+    """
+    import base64
+    import requests
+    if not (api_key or "").strip():
+        raise RuntimeError("Gemini API key မရှိဘူး — sidebar မှာ ထည့်")
+    text = (text or "").strip()
+    if not text:
+        raise RuntimeError("empty text")
+    url = f"{GEMINI_BASE}{model_id}:generateContent"
+    body = {
+        "contents": [{"parts": [{"text": text}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
+        },
+    }
+    headers = {"Content-Type": "application/json",
+               "x-goog-api-key": api_key.strip()}
+    last_err, r = None, None
+    for attempt in range(3):
+        try:
+            r = requests.post(url, headers=headers, json=body, timeout=120)
+        except Exception as e:
+            last_err = RuntimeError(f"Gemini TTS request failed: {e}")
+        else:
+            if r.status_code == 200:
+                break
+            if r.status_code in (429, 500, 502, 503):
+                last_err = RuntimeError(
+                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
+            else:
+                raise RuntimeError(
+                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
+        if attempt < 2:
+            time.sleep(5.0 * (2 ** attempt))
+    else:
+        raise last_err
+    try:
+        part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+        b64, mime = part["data"], part.get("mimeType", "")
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError(f"Gemini TTS response မမှန်ပါ: {r.text[:200]}")
+    m = re.search(r"rate=(\d+)", mime or "")
+    sr = int(m.group(1)) if m else 24000
+    raw = base64.b64decode(b64)
+    if len(raw) <= 1000:
+        raise RuntimeError("empty audio")
+    tmp, pcm = path + ".part", path + ".pcm"
+    try:
+        with open(pcm, "wb") as fh:
+            fh.write(raw)
+        # Gemini TTS → 16-bit mono PCM
+        run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
+             "-ac", "1", "-i", pcm,
+             "-c:a", "libmp3lame", "-b:a", "128k", tmp])
+        if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
+            raise RuntimeError("empty audio")
+        os.replace(tmp, path)
+    finally:
+        for f in (tmp, pcm):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+
+
+async def _tts_line_save(text, voice, path):
+    """engine-aware TTS save — async contexts (_parallel_tts_fetch, tts_natural)."""
+    if _TTS_ENGINE == "gemini":
+        await asyncio.to_thread(_gemini_tts_save, _GEMINI_TTS_KEY,
+                                _GEMINI_TTS_MODEL, _GEMINI_TTS_VOICE, text, path)
+    else:
+        await _edge_save(text, voice, path)
 
 def _tts_use_concurrent():
     """relay (phone IP, clean) so 3-concurrent; mahout yin TTS_CONCURRENT."""
@@ -1375,10 +1482,16 @@ async def _edge_save(text, voice, path):
 
 
 def _tts_cache_path(text, voice_primary):
-    """edge-tts cache file path — key = voice + rate + text."""
-    # edge3: — rate မတူရင် cache မရောစေဖို့ (အရင် edge2 key တွေနဲ့ မတူ)
-    key = hashlib.sha1(
-        f"edge3:{voice_primary}:{_VOICE_RATE}:{text}".encode("utf-8")).hexdigest()[:16]
+    """TTS cache file path — key = engine + voice + rate + text."""
+    if _TTS_ENGINE == "gemini":
+        key = hashlib.sha1(
+            f"gtts:{_GEMINI_TTS_MODEL}:{_GEMINI_TTS_VOICE}:{text}"
+            .encode("utf-8")).hexdigest()[:16]
+    else:
+        # edge3: — rate မတူရင် cache မရောစေဖို့ (အရင် edge2 key တွေနဲ့ မတူ)
+        key = hashlib.sha1(
+            f"edge3:{voice_primary}:{_VOICE_RATE}:{text}"
+            .encode("utf-8")).hexdigest()[:16]
     return os.path.join(CACHE_TTS, f"{key}.mp3")
 
 
@@ -1390,6 +1503,19 @@ def tts_segment(text, voice_primary=VOICE_MALE, voice_fallback=VOICE_FEMALE, err
     voice အမှန်နဲ့ cache key — fallback audio ကို primary key အောက် မှားမသိမ်းဘူး.
     err_out (list) ပေးရင် ပထမဆုံး error ရဲ့ type+msg ကို ထည့်ပေးမယ် (diagnostics).
     """
+    if _TTS_ENGINE == "gemini":
+        out = _tts_cache_path(text, _GEMINI_TTS_VOICE)
+        if _valid_audio(out):
+            return out
+        try:
+            _gemini_tts_save(_GEMINI_TTS_KEY, _GEMINI_TTS_MODEL,
+                             _GEMINI_TTS_VOICE, text, out)
+            if _valid_audio(out):
+                return out
+        except Exception as e:
+            if err_out is not None and not err_out:
+                err_out.append(f"{type(e).__name__}: {str(e)[:150]}")
+        return None
     for voice in (voice_primary, voice_fallback):
         out = _tts_cache_path(text, voice)
         if _valid_audio(out):
@@ -1470,14 +1596,14 @@ def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
 
         async def _one(i, text):
             async with sem:
-                for v in (voice_primary, voice_fallback):
+                for v in _tts_voices(voice_primary, voice_fallback):
                     vp = _tts_cache_path(text, v)  # voice အမှန်နဲ့ key (fallback audio မှားသိမ်းတာ ပြင်)
                     if _valid_audio(vp):
                         return i, vp
                     for attempt in range(2):
                         try:
                             # hang မနေစေဖို့ 45s timeout
-                            await asyncio.wait_for(_edge_save(text, v, vp), timeout=45)
+                            await asyncio.wait_for(_tts_line_save(text, v, vp), timeout=45)
                             if _valid_audio(vp):
                                 return i, vp
                         except Exception as e:
@@ -2103,14 +2229,14 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
 
         async def _one(i, text):
             async with sem:
-                for v in (voice, VOICE_FEMALE):
+                for v in _tts_voices(voice, VOICE_FEMALE):
                     vp = _tts_cache_path(text, v)  # voice အမှန်နဲ့ key
                     if _valid_audio(vp):
                         return i, vp
                     for attempt in range(2):
                         try:
                             # hang မနေစေဖို့ 45s timeout
-                            await asyncio.wait_for(_edge_save(text, v, vp), timeout=45)
+                            await asyncio.wait_for(_tts_line_save(text, v, vp), timeout=45)
                             if _valid_audio(vp):
                                 return i, vp
                         except Exception as e:
@@ -3242,6 +3368,8 @@ def _init_state(st):
         "ov_logo_path": None, "ov_logo_pos": "↘️ အောက်-ညာ", "ov_logo_size": 160,
         # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
         "voice_speed": 1.0,
+        # 🔊 TTS engine + Gemini voice
+        "tts_engine": "🤖 Gemini", "gemini_tts_voice": "Kore",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3352,14 +3480,26 @@ def main():
         model_id = st.text_input("Gemini model", value=GEMINI_MODEL_DEFAULT)
         # 🎚️ အသံချုံ့ slider ဝှက်ထားတယ် — render mode မှာ အလုပ်မလုပ်လို့; 1.3x အသေ
         max_speed = 1.3
-        voice = st.selectbox("အသံ", [VOICE_MALE, VOICE_FEMALE],
-                             format_func=lambda v: "🗣️ ကျား (Thiha)" if v == VOICE_MALE else "🗣️ မ (Nilar)")
-        voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
-                                key="voice_speed",
-                                help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်. "
-                                     "Microsoft TTS တိုက်ရိုက်လမ်းမှာသာ သက်ရောက်တယ် "
-                                     "(ဖုန်း MP3 / relay လမ်းမှာ မရ)")
-        _set_voice_rate(voice_speed)
+        # 🔊 TTS engine — Edge (Microsoft) က 403 block ထိထားလို့ Gemini default
+        tts_engine = st.radio("🔊 TTS engine", ["🤖 Gemini", "🌐 Edge TTS"],
+                              key="tts_engine",
+                              help="Edge TTS က Microsoft block မိနေတယ် (403) — "
+                                   "Gemini ကို အကြံပြုတယ်. Edge ကို phone relay နဲ့ "
+                                   "သုံးနေရင် Edge ရွေးထားလို့ရတယ်.")
+        if tts_engine.startswith("🤖"):
+            voice = st.selectbox("Gemini အသံ", _GEMINI_TTS_VOICES,
+                                 key="gemini_tts_voice",
+                                 help="Burmese narration အသံ — ကြိုက်တာ ရွေး, "
+                                      "အောက်က စမ်းနားထောင်ခလုတ်နဲ့ စစ်လို့ရတယ်")
+        else:
+            voice = st.selectbox("အသံ", [VOICE_MALE, VOICE_FEMALE],
+                                 format_func=lambda v: "🗣️ ကျား (Thiha)" if v == VOICE_MALE else "🗣️ မ (Nilar)")
+            voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
+                                    key="voice_speed",
+                                    help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်. "
+                                         "Edge TTS လမ်းမှာသာ သက်ရောက်တယ်.")
+            _set_voice_rate(voice_speed)
+        _sync_tts_globals(tts_engine, api_key, S.get("gemini_tts_voice", "Kore"))
         if st.button("🔊 အသံ စမ်းနားထောင်ရန်", use_container_width=True,
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
                           "အဆင့် ၅ မလုပ်ခင် အသံကြိုက်မကြိုက် စစ်လို့ရတယ်"):

@@ -12,6 +12,7 @@
 > - 🌙 **Design အသစ်** — midnight studio theme
 > - 🎚️ **Voice speed** — အသံအမြန်နှုန်း ကိုယ်တိုင်ချိန် (0.7x–1.3x, sidebar)
 > - 📱 **Social pack** — caption ၃ ခု + hashtag + poster prompt (manual + auto နှစ်မျိုးလုံး)
+> - 🔊 **TTS engine ရွေး** — 🤖 Gemini TTS (default, Edge 403 block ကျော်) / 🌐 Edge TTS
 
 ## လုပ်ဆောင်ချက်
 
