@@ -1,18 +1,14 @@
 # 🎙️ Audio Dub Studio
 
+> 🔀 **Fork note (pannthee)**: မူရင်း upstream အတိုင်း + **Gemini TTS** engine
+> (Edge TTS 403 block ကြောင့်; sidebar → 🔊 TTS engine က ရွေး, default 🤖 Gemini).
+> အပိုင်းသေးတွေ auto-merge (~12s) ဖွင့်ထားလို့ TTS မြန်တယ်.
+> Create by Bo Bo Myint Mo.
+
 ဗီဒီယိုထဲက စကားပြောအပိုင်းတွေကို **မြန်မာအသံ**နဲ့ အစားထိုးပေးတဲ့ tool —
 မူရင်းဗီဒီယိုအတိုင်း၊ မူရင်းအချိန်အတိုင်း။ RecapKit ရဲ့ **Audio Dub** feature ကို
 တစ်ယောက်စာသုံးဖို့ ပြန်ဆောက်ထားတာ။ Login မလို၊ ငွေမလို —
 ကိုယ့် **Streamlit Cloud** (အလကား) ပေါ်မှာ run တယ်။
-
-> **Fork note:** ဒါက [samuel66689/audio-dub-studio](https://github.com/samuel66689/audio-dub-studio)
-> ကို ပြင်ထားတဲ့ version ပါ။ ထပ်တိုးထားတာတွေ:
-> - 💬 **Subtitle burn-in** — မြန်မာစာသားကို ဗီဒီယိုထဲ တိုက်ရိုက်ကပ် (Padauk font၊ အရွယ်/အပေါ်-အောက် ရွေး)
-> - 🖼️ **Logo overlay** — ကိုယ့် logo တင်၊ ထောင့် ၄ ထောင့်က ရွေး၊ အရွယ်ချိန်
-> - 🌙 **Design အသစ်** — midnight studio theme
-> - 🎚️ **Voice speed** — အသံအမြန်နှုန်း ကိုယ်တိုင်ချိန် (0.7x–1.3x, sidebar)
-> - 📱 **Social pack** — caption ၃ ခု + hashtag + poster prompt (manual + auto နှစ်မျိုးလုံး)
-> - 🔊 **TTS engine ရွေး** — 🤖 Gemini TTS (default, Edge 403 block ကျော်) / 🌐 Edge TTS
 
 ## လုပ်ဆောင်ချက်
 
@@ -22,8 +18,8 @@
    sidebar မှာ AssemblyAI key ထည့်၊ toggle ဖွင့်ထား)
 3. Gemini (`gemini-3.5-flash-lite`) နဲ့ သဘာဝကျတဲ့ ပြောစကားမြန်မာလို ဘာသာပြန်
 4. စာသားကို ပြန်စစ် / ပြင် (တစ်ကြောင်းချင်း)
-5. edge-tts `my-MM-ThihaNeural` (ကျားအသံ) နဲ့ အသံထုတ် —
-   တစ်ကြောင်းချင်းကို သူ့အချိန်ကွက်ထဲ အတိအကျထည့်
+5. **TTS** နဲ့ အသံထုတ် — 🤖 Gemini TTS (default) သို့မဟုတ် 🌐 Edge TTS
+   (`my-MM-ThihaNeural` ကျားအသံ) — တစ်ကြောင်းချင်းကို သူ့အချိန်ကွက်ထဲ အတိအကျထည့်
    (ရှည်ရင် 1.3x အထိ မြန်ပေး၊ နောက်အပိုင်းနဲ့ မထပ်စေဘူး၊ ရှည်လွန်းတဲ့လိုင်းတွေ report ထုတ်)
 6. မူရင်းဗီဒီယိုနဲ့ ပေါင်း → **Dubbed MP4** + **SRT** download
 

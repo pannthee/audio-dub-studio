@@ -17,7 +17,7 @@ Pipeline:
       အကွက်သေးတွေကြောင့် အသံအရမ်းမြန်ရတာကို ကာကွယ်ဖို့
   3. Gemini နဲ့ သဘာဝကျတဲ့ ပြောစကားမြန်မာလို ဘာသာပြန်
   4. ပြန်စစ်ပြီး ပြင်လို့ရ (တစ်ကြောင်းချင်း)
-  5. TTS နဲ့ အသံထုတ် (🤖 Gemini / 🌐 Edge ရွေး) → အချိန်ကွက်အတိုင်း ချုံ့/ဖြန့်
+  5. edge-tts (my-MM-ThihaNeural) နဲ့ အသံထုတ် → အချိန်ကွက်အတိုင်း ချုံ့/ဖြန့်
   5b. (optional) အချိန်ကွက်ထဲ မဝင်တဲ့လိုင်း → Gemini နဲ့ အလိုအလျောက်တိုအောင်ပြင်
       → အသံပြန်ထုတ် (တစ်ကြိမ်သာ)
   6. ဗီဒီယိုအသစ်နဲ့ ပေါင်း → MP4 download + SRT download
@@ -55,101 +55,105 @@ WORK_DIR = os.path.join(APP_DIR, "work")
 os.makedirs(CACHE_TTS, exist_ok=True)
 os.makedirs(WORK_DIR, exist_ok=True)
 
-# ---------------------------------------------------------- 🎙️ Studio theme (midnight)
+# ---------------------------------------------------------- 🕷️ Spider-Man theme
 _SPIDEY_CSS = """<style>
-/* --- နောက်ခံ: midnight navy + soft glows --- */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
+/* --- နောက်ခံ: ညမှောင် + spider web --- */
 .stApp {
-    background-color: #0B0E17;
+    background-color: #0A0A14;
     background-image:
-        radial-gradient(900px 420px at 85% -5%, rgba(56,189,248,.10), transparent 60%),
-        radial-gradient(760px 480px at 5% 105%, rgba(129,140,248,.10), transparent 60%);
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%23E62429' stroke-opacity='0.06'%3E%3Ccircle cx='260' cy='0' r='55'/%3E%3Ccircle cx='260' cy='0' r='105'/%3E%3Ccircle cx='260' cy='0' r='155'/%3E%3Ccircle cx='260' cy='0' r='205'/%3E%3Cpath d='M260 0 L0 260 M260 0 L90 260 M260 0 L175 260 M260 0 L260 260 M260 0 L0 175 M260 0 L0 90'/%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(1000px 480px at 88% -5%, rgba(230,36,41,.12), transparent 60%),
+        radial-gradient(820px 520px at 4% 108%, rgba(43,92,230,.12), transparent 60%);
     background-repeat: no-repeat;
+    background-position: top right;
 }
 
 /* --- hero --- */
-.spidey-hero { text-align: center; padding: 22px 0 6px; }
-.spidey-kicker { color: #7DD3FC; font-size: .78rem; letter-spacing: 4px; font-weight: 700; }
+.spidey-hero { text-align: center; padding: 20px 0 4px; }
+.spidey-kicker { color: #8A93B8; font-size: .78rem; letter-spacing: 3px; font-weight: 700; }
 .spidey-title {
-    font-size: 3rem; letter-spacing: 1px; font-weight: 900;
-    background: linear-gradient(120deg, #E0F2FE 20%, #38BDF8 55%, #818CF8 90%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin: 4px 0;
+    font-family: 'Bangers', 'Arial Black', sans-serif;
+    font-size: 3.2rem; letter-spacing: 3px; color: #F03A3A;
+    -webkit-text-stroke: 1.5px #5d0a0d;
+    text-shadow: 3px 3px 0 #1D4ED8, 7px 7px 0 rgba(0,0,0,.55), 0 0 34px rgba(230,36,41,.55);
+    transform: rotate(-1.5deg); margin: 2px 0;
 }
-.spidey-sub { color: #A5B4D4; font-size: 1rem; margin-top: 8px; }
-@media (max-width: 640px){ .spidey-title{ font-size: 2.1rem; } }
+.spidey-sub { color: #B9C4E8; font-size: 1rem; margin-top: 8px; }
+@media (max-width: 640px){ .spidey-title{ font-size: 2.2rem; } }
 
 /* --- အဆင့်ခြေရာ (step tracker) --- */
 .spidey-steps { display: flex; gap: 8px; margin: 16px 0 6px; flex-wrap: wrap; }
 .spidey-step { flex: 1 1 0; min-width: 96px; text-align: center; padding: 9px 4px;
     border-radius: 14px; font-size: .8rem; font-weight: 700;
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); color: #8B94B3; }
+    background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.13); color: #9AA0BC; }
 .spidey-step .n { display: block; font-size: 1.1rem; margin-bottom: 2px; }
-.spidey-step.done { background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.55); color: #BAE6FD; }
-.spidey-step.current { background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
-    border-color: #7DD3FC; box-shadow: 0 0 18px rgba(56,189,248,.45); }
+.spidey-step.done { background: rgba(230,36,41,.16); border-color: rgba(230,36,41,.7); color: #FFB4B6; }
+.spidey-step.current { background: linear-gradient(135deg,#E62429,#9E1116); color: #fff;
+    border-color: #FF7A7A; box-shadow: 0 0 18px rgba(230,36,41,.65); }
 .spidey-step.skip { opacity: .4; }
 
-/* --- ကတ် (st.container(border=True) အစစ်) --- */
+/* --- ကတ် (st.container(border=True) အစစ် — အထဲမှာ content တကယ်ရှိတယ်) --- */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(17,22,38,.78);
-    border: 1px solid rgba(56,189,248,.22) !important;
+    background: rgba(18,18,36,.78);
+    border: 1px solid rgba(230,36,41,.30) !important;
     border-radius: 18px;
     box-shadow: 0 8px 28px rgba(0,0,0,.5);
 }
 .spidey-stephead {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 16px; margin-bottom: 6px;
-    background: linear-gradient(90deg, rgba(56,189,248,.16), rgba(129,140,248,.10));
-    border: 1px solid rgba(56,189,248,.22);
+    background: linear-gradient(90deg, rgba(230,36,41,.25), rgba(43,92,230,.14));
+    border: 1px solid rgba(230,36,41,.28);
     border-radius: 12px;
     font-size: 1.12rem; font-weight: 800; color: #fff;
 }
 .spidey-num { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
-    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(56,189,248,.55); }
+    background: linear-gradient(135deg,#F03A3A,#8f1013); color: #fff;
+    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(230,36,41,.8); }
 
 /* --- ခလုတ် --- */
 div[data-testid*="stBaseButton-primary"] > button, .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #0EA5E9, #6366F1) !important;
+    background: linear-gradient(135deg, #F03A3A, #A50F14) !important;
     color: #fff !important; border: none !important; border-radius: 12px !important;
     font-weight: 800 !important; letter-spacing: .3px;
-    box-shadow: 0 4px 20px rgba(56,189,248,.35) !important;
+    box-shadow: 0 4px 20px rgba(230,36,41,.5) !important;
 }
 div[data-testid*="stBaseButton-primary"] > button:hover, .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 6px 28px rgba(56,189,248,.6) !important;
+    box-shadow: 0 6px 28px rgba(230,36,41,.85) !important;
     transform: translateY(-1px); color: #fff !important;
 }
 .stButton > button[kind="secondary"], div[data-testid*="stBaseButton-secondary"] > button {
-    border: 1px solid rgba(125,211,252,.4) !important; border-radius: 12px !important;
-    background: rgba(56,189,248,.07) !important; color: #C4D7F5 !important; font-weight: 700 !important;
+    border: 1px solid rgba(80,120,255,.55) !important; border-radius: 12px !important;
+    background: rgba(43,92,230,.10) !important; color: #C9D6FF !important; font-weight: 700 !important;
 }
 .stButton > button[kind="secondary"]:hover, div[data-testid*="stBaseButton-secondary"] > button:hover {
-    background: rgba(56,189,248,.16) !important; color: #fff !important;
-    box-shadow: 0 0 16px rgba(56,189,248,.35) !important; border-color: #7DD3FC !important;
+    background: rgba(43,92,230,.22) !important; color: #fff !important;
+    box-shadow: 0 0 16px rgba(43,92,230,.45) !important; border-color: #7FA2FF !important;
 }
 
 /* --- sidebar --- */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0D1220 0%, #0B0E17 70%) !important;
-    border-right: 1px solid rgba(56,189,248,.20);
+    background: linear-gradient(180deg, #160709 0%, #0A0A14 70%) !important;
+    border-right: 1px solid rgba(230,36,41,.32);
 }
-section[data-testid="stSidebar"] h3 { border-left: 4px solid #38BDF8; padding-left: 10px !important; }
-section[data-testid="stSidebar"] h4 { color: #7DD3FC !important; }
+section[data-testid="stSidebar"] h3 { border-left: 4px solid #E62429; padding-left: 10px !important; }
+section[data-testid="stSidebar"] h4 { color: #FF8A8D !important; }
 
 /* --- တခြား --- */
-div[data-testid="stExpander"] { border: 1px solid rgba(56,189,248,.22); border-radius: 14px;
-    background: rgba(56,189,248,.04); }
-div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(56,189,248,.45); border-radius: 16px;
-    background: rgba(56,189,248,.04); padding: 10px; }
+div[data-testid="stExpander"] { border: 1px solid rgba(230,36,41,.32); border-radius: 14px;
+    background: rgba(230,36,41,.05); }
+div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(230,36,41,.55); border-radius: 16px;
+    background: rgba(230,36,41,.05); padding: 10px; }
 div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
-    border-color: #38BDF8 !important;
-    box-shadow: 0 0 0 1px #38BDF8, 0 0 14px rgba(56,189,248,.35) !important; }
-div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(56,189,248,.6); }
-.spidey-dl-label { font-weight: 800; color: #BAE6FD; margin: 6px 0 10px; font-size: 1rem; }
-.spidey-foot { text-align: center; color: #5A6480; font-size: .8rem; padding: 20px 0 8px; }
+    border-color: #E62429 !important;
+    box-shadow: 0 0 0 1px #E62429, 0 0 14px rgba(230,36,41,.4) !important; }
+div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(230,36,41,.8); }
+.spidey-dl-label { font-weight: 800; color: #FFB4B6; margin: 6px 0 10px; font-size: 1rem; }
+.spidey-foot { text-align: center; color: #5A6080; font-size: .8rem; padding: 20px 0 8px; }
 </style>"""
-
 
 
 _card_ctx_stack = []
@@ -271,21 +275,6 @@ TTS_CONCURRENT = False
 # UI (Step 5 expander) က URL/token ထည့်ရင် _sync_relay_config() က ဒါတွေကို set မယ်.
 _RELAY_URL = ""
 _RELAY_TOKEN = ""
-# 🎚️ voice speed — sidebar slider က သတ်မှတ်; edge-tts rate param အဖြစ် သုံး.
-# (relay/ဖုန်း MP3 လမ်းမှာ မသက်ရောက်ဘူး — Microsoft တိုက်ရိုက်လမ်းသာ)
-_VOICE_RATE = "+0%"
-
-
-def _set_voice_rate(mult):
-    """mult: 0.7–1.3 float → edge-tts rate string (+/-N%)."""
-    global _VOICE_RATE
-    try:
-        pct = round((float(mult) - 1.0) * 100)
-    except (TypeError, ValueError):
-        pct = 0
-    pct = max(-50, min(50, pct))
-    _VOICE_RATE = f"{pct:+d}%"
-
 
 # ------------------------------------------------- 🔊 TTS engine (gemini / edge)
 # Edge TTS (Microsoft) က 2026-10 မှာ v1 endpoint ကို 403 နဲ့ block စလုပ်လို့
@@ -324,93 +313,6 @@ def _tts_line_timeout():
     """တစ်ကြောင်းစာ TTS timeout (စက္ကန့်) — Gemini စာရှည်ရင်
     generate ကြာတတ်လို့ 120s, Edge က 45s."""
     return 120 if _TTS_ENGINE == "gemini" else 45
-
-
-def _gemini_tts_save(api_key, model_id, voice_name, text, path):
-    """Gemini TTS → base64 PCM (24kHz) → mp3 (ffmpeg). _edge_save လို atomic write.
-
-    429/5xx → backoff နဲ့ ၃ ကြိမ်အထိ retry.
-    """
-    import base64
-    import requests
-    if not (api_key or "").strip():
-        raise RuntimeError("Gemini API key မရှိဘူး — sidebar မှာ ထည့်")
-    text = (text or "").strip()
-    if not text:
-        raise RuntimeError("empty text")
-    url = f"{GEMINI_BASE}{model_id}:generateContent"
-    body = {
-        "contents": [{"parts": [{"text": text}]}],
-        "generationConfig": {
-            "responseModalities": ["AUDIO"],
-            "speechConfig": {
-                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
-        },
-    }
-    headers = {"Content-Type": "application/json",
-               "x-goog-api-key": api_key.strip()}
-    last_err, r = None, None
-    for attempt in range(3):
-        try:
-            r = requests.post(url, headers=headers, json=body, timeout=120)
-        except Exception as e:
-            last_err = RuntimeError(f"Gemini TTS request failed: {e}")
-        else:
-            if r.status_code == 200:
-                break
-            if r.status_code in (429, 500, 502, 503):
-                last_err = RuntimeError(
-                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
-            else:
-                raise RuntimeError(
-                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
-        if attempt < 2:
-            time.sleep(5.0 * (2 ** attempt))
-    else:
-        raise last_err
-    try:
-        part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
-        b64, mime = part["data"], part.get("mimeType", "")
-    except (KeyError, IndexError, TypeError):
-        raise RuntimeError(f"Gemini TTS response မမှန်ပါ: {r.text[:200]}")
-    m = re.search(r"rate=(\d+)", mime or "")
-    sr = int(m.group(1)) if m else 24000
-    raw = base64.b64decode(b64)
-    if len(raw) <= 1000:
-        raise RuntimeError("empty audio")
-    tmp, pcm = path + ".part", path + ".pcm"
-    try:
-        with open(pcm, "wb") as fh:
-            fh.write(raw)
-        # Gemini TTS → 16-bit mono PCM.
-        # NOTE: tmp ends with ".part" so output format MUST be explicit (-f mp3),
-        # otherwise ffmpeg fails with "Unable to find a suitable output format".
-        try:
-            run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
-                 "-ac", "1", "-i", pcm,
-                 "-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp])
-        except subprocess.CalledProcessError as e:
-            _ferr = (e.stderr or "").strip()[:300]
-            raise RuntimeError(
-                f"ffmpeg PCM→MP3 failed: {_ferr or e}")
-        if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
-            raise RuntimeError("empty audio")
-        os.replace(tmp, path)
-    finally:
-        for f in (tmp, pcm):
-            try:
-                os.remove(f)
-            except OSError:
-                pass
-
-
-async def _tts_line_save(text, voice, path):
-    """engine-aware TTS save — async contexts (_parallel_tts_fetch, tts_natural)."""
-    if _TTS_ENGINE == "gemini":
-        await asyncio.to_thread(_gemini_tts_save, _GEMINI_TTS_KEY,
-                                _GEMINI_TTS_MODEL, _GEMINI_TTS_VOICE, text, path)
-    else:
-        await _edge_save(text, voice, path)
 
 def _tts_use_concurrent():
     """relay (phone IP, clean) / Gemini engine ဆို parallel TTS;
@@ -888,11 +790,10 @@ _TIKTOK_SYS = (
     "You are a TikTok content assistant for a Burmese-dubbed Chinese drama channel. "
     "The user will paste your image prompt into an AI image app (Flow) to make a 9:16 poster, "
     "and post the caption on TikTok. "
-    "Respond with STRICT JSON only: {\"captions\": [str, str, str], \"hashtags\": [str], "
+    "Respond with STRICT JSON only: {\"caption\": str, \"hashtags\": [str], "
     "\"poster_title\": str, \"poster_sub\": str, \"poster_prompt\": str}. "
     "Rules: "
-    "captions = THREE different punchy Burmese hook lines (each under 60 chars) that stop "
-    "scrollers, no hashtags inside — vary the angle (emotional, curiosity-gap, dramatic). "
+    "caption = ONE punchy Burmese hook line (under 60 chars) that stops scrollers, no hashtags inside. "
     "hashtags = 8-12 TikTok hashtags WITH the # symbol, the kind Myanmar movie-recap creators "
     "actually use (mix broad and niche drama/recap tags). "
     "poster_title = short Burmese poster title (under 25 chars), dramatic. "
@@ -949,14 +850,8 @@ def _tiktok_pack(api_key, model_id, segments, dl_base, setting_hint=""):
         spec += ('. No other text in the image. If Burmese script cannot be rendered '
                  'cleanly, leave the top third empty instead.')
         prompt = (prompt + spec).strip()
-    caps = data.get("captions") or []
-    if isinstance(caps, str):
-        caps = [caps]
-    if not caps and data.get("caption"):
-        caps = [data["caption"]]  # backward compat (old format)
-    captions = [str(c).strip() for c in caps if str(c).strip()][:3]
     return {
-        "captions": captions,
+        "caption": str(data.get("caption") or "").strip(),
         "hashtags": [str(t).strip() for t in tags if str(t).strip()][:14],
         "poster_title": title,
         "poster_sub": sub,
@@ -964,73 +859,12 @@ def _tiktok_pack(api_key, model_id, segments, dl_base, setting_hint=""):
     }
 
 
-def _tiktok_ui(S, api_key, model_id, is_video, do_ckpt=True):
-    """📱 Social ပေါ်တင်ရန် — caption 3 ခု + hashtag + Flow poster prompt.
+def merge_tiny_segments(segments, max_gap=0.5, min_slot=6.0, max_merged=12.0):
+    """Whisper (verbose_json) က စက္ကန့်ပိုင်းအကွက်သေးသေးလေးတွေ ပေးတတ်တယ် —
+    အဲ့ဒါတွေကို ကပ်နေတဲ့နောက်အပိုင်းတွေနဲ့ ~12s အထိ ပေါင်းလိုက်.
 
-    step 6 (manual) ရော _auto_results ရော ဒါကိုပဲ သုံး.
-    """
-    import streamlit as st
-    segments = S.get("out_subs") or S.get("final_segments")
-    if not segments:
-        return
-    st.markdown("---")
-    st.markdown("### 📱 Social ပေါ်တင်ရန်")
-    st.caption("Caption ၃ ခု + hashtag + Flow AI poster prompt — "
-               "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
-    _tt_setting = st.text_input("🏯 Background setting",
-        value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
-        help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
-        key="tiktok_setting_input")
-    S["_tt_setting"] = _tt_setting
-    if st.button("✨ Caption + Prompt ထုတ်ရန်", type="primary",
-                 use_container_width=True, key="tiktok_gen_btn"):
-        if not api_key:
-            st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
-        else:
-            with st.spinner("TikTok pack ထုတ်နေတယ်..."):
-                try:
-                    S.tiktok_pack = _tiktok_pack(
-                        api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
-                        segments, S.get("dl_base"),
-                        setting_hint=_tt_setting)
-                    S["_tt_gen"] = S.get("_tt_gen", 0) + 1
-                    if do_ckpt:
-                        _manual_ckpt_save(S, is_video)
-                except Exception as e:
-                    st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
-    _tp = S.get("tiktok_pack")
-    if _tp:
-        _tg = S.get("_tt_gen", 0)
-
-        def _tt_row(label, value, area_key, copy_key, height=None):
-            _c1, _c2 = st.columns([6, 1])
-            with _c1:
-                if height:
-                    st.text_area(label, value, height=height, key=area_key)
-                else:
-                    st.text_area(label, value, key=area_key)
-            with _c2:
-                st.markdown("<br>", unsafe_allow_html=True)
-                _copy_button(S.get(area_key, ""), copy_key)
-
-        for _ci, _cap in enumerate(_tp.get("captions") or [], 1):
-            _tt_row(f"📝 Caption {_ci} (ထိထိမိမိ တစ်ကြောင်း)",
-                    _cap, f"tt_caption_{_tg}_{_ci}",
-                    f"tt_copy_cap_{_tg}_{_ci}")
-        _tt_row("#️⃣ Hashtags",
-                " ".join(_tp.get("hashtags", "") or []),
-                f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
-        _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
-        if _pt or _ps:
-            st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
-        _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
-                _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
-                f"tt_copy_prm_{_tg}", height=180)
-
-
-def merge_tiny_segments(segments, max_gap=0.5, min_slot=1.5, max_merged=8.0):
-    """Whisper (verbose_json) က တခါတလေ စက္ကန့်ပိုင်းအကွက်သေးသေးလေးတွေ
-    (ဥပမာ 0.2s) ပေးတတ်တယ် — အဲ့ဒါတွေကို ကပ်နေတဲ့နောက်အပိုင်းနဲ့ ပေါင်းလိုက်.
+    TTS request အရေအတွက် လျှော့ဖို့ (Gemini TTS က တစ်ခေါက်ကို overhead ရှိလို့
+    အပိုင်း 70 ကို 70 ခေါက် ခေါ်ရင် အရမ်းကြာတယ်).
 
     စည်း: အကွက်က min_slot ထက် သေးနေသေးရင် + နောက်အပိုင်းနဲ့ကြားက gap က
     max_gap ထက်နည်းရင် ပေါင်း; ပေါင်းပြီးသားအကွက် max_merged ထက် မကျော်စေနဲ့.
@@ -1489,7 +1323,7 @@ async def _edge_save(text, voice, path):
     import edge_tts
     tmp = path + ".part"
     try:
-        await edge_tts.Communicate(text, voice, rate=_VOICE_RATE).save(tmp)
+        await edge_tts.Communicate(text, voice).save(tmp)
         if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
             raise RuntimeError("empty audio")
         os.replace(tmp, path)
@@ -1501,17 +1335,103 @@ async def _edge_save(text, voice, path):
                 pass
 
 
+def _gemini_tts_save(api_key, model_id, voice_name, text, path):
+    """Gemini TTS → base64 PCM (24kHz) → mp3 (ffmpeg). _edge_save လို atomic write.
+
+    429/5xx → backoff နဲ့ ၃ ကြိမ်အထိ retry.
+    """
+    import base64
+    import requests
+    if not (api_key or "").strip():
+        raise RuntimeError("Gemini API key မရှိဘူး — sidebar မှာ ထည့်")
+    text = (text or "").strip()
+    if not text:
+        raise RuntimeError("empty text")
+    url = f"{GEMINI_BASE}{model_id}:generateContent"
+    body = {
+        "contents": [{"parts": [{"text": text}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
+        },
+    }
+    headers = {"Content-Type": "application/json",
+               "x-goog-api-key": api_key.strip()}
+    last_err, r = None, None
+    for attempt in range(3):
+        try:
+            r = requests.post(url, headers=headers, json=body, timeout=120)
+        except Exception as e:
+            last_err = RuntimeError(f"Gemini TTS request failed: {e}")
+        else:
+            if r.status_code == 200:
+                break
+            if r.status_code in (429, 500, 502, 503):
+                last_err = RuntimeError(
+                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
+            else:
+                raise RuntimeError(
+                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
+        if attempt < 2:
+            time.sleep(5.0 * (2 ** attempt))
+    else:
+        raise last_err
+    try:
+        part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+        b64, mime = part["data"], part.get("mimeType", "")
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError(f"Gemini TTS response မမှန်ပါ: {r.text[:200]}")
+    m = re.search(r"rate=(\d+)", mime or "")
+    sr = int(m.group(1)) if m else 24000
+    raw = base64.b64decode(b64)
+    if len(raw) <= 1000:
+        raise RuntimeError("empty audio")
+    tmp, pcm = path + ".part", path + ".pcm"
+    try:
+        with open(pcm, "wb") as fh:
+            fh.write(raw)
+        # Gemini TTS → 16-bit mono PCM.
+        # NOTE: tmp ends with ".part" so output format MUST be explicit (-f mp3),
+        # otherwise ffmpeg fails with "Unable to find a suitable output format".
+        try:
+            run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
+                 "-ac", "1", "-i", pcm,
+                 "-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp])
+        except subprocess.CalledProcessError as e:
+            _ferr = (e.stderr or "").strip()[:300]
+            raise RuntimeError(
+                f"ffmpeg PCM→MP3 failed: {_ferr or e}")
+        if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
+            raise RuntimeError("empty audio")
+        os.replace(tmp, path)
+    finally:
+        for f in (tmp, pcm):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+
+
+async def _tts_line_save(text, voice, path):
+    """engine-aware TTS save — async contexts (_parallel_tts_fetch, tts_natural)."""
+    if _TTS_ENGINE == "gemini":
+        await asyncio.to_thread(_gemini_tts_save, _GEMINI_TTS_KEY,
+                                _GEMINI_TTS_MODEL, _GEMINI_TTS_VOICE, text, path)
+    else:
+        await _edge_save(text, voice, path)
+
+
 def _tts_cache_path(text, voice_primary):
-    """TTS cache file path — key = engine + voice + rate + text."""
+    """TTS cache file path — key = engine + voice + text."""
     if _TTS_ENGINE == "gemini":
         key = hashlib.sha1(
             f"gtts:{_GEMINI_TTS_MODEL}:{_GEMINI_TTS_VOICE}:{text}"
             .encode("utf-8")).hexdigest()[:16]
     else:
-        # edge3: — rate မတူရင် cache မရောစေဖို့ (အရင် edge2 key တွေနဲ့ မတူ)
+        # edge2: — အရင် key နဲ့ သိမ်းထားတဲ့ တစ်ဝက်ဖိုင်တွေ (poisoned cache) ကျော်ဖို့
         key = hashlib.sha1(
-            f"edge3:{voice_primary}:{_VOICE_RATE}:{text}"
-            .encode("utf-8")).hexdigest()[:16]
+            f"edge2:{voice_primary}:{text}".encode("utf-8")).hexdigest()[:16]
     return os.path.join(CACHE_TTS, f"{key}.mp3")
 
 
@@ -1956,9 +1876,9 @@ def _premade_from_zip(zip_file, segments, voice, outdir):
 def tts_and_fit(segments, voice, max_speed, work_segs, progress_cb=None, tts_fn=None, premade=None):
     """segments: [{'start','end','text'}] → fitted mp3 တွေ.
 
-    TTS_CONCURRENT=True ဆို: network အပိုင်းကို 3 ပြိုင်နက်ထုတ် (retry+backoff ပါ) →
+    TTS: engine/relay အလိုက် parallel (Edge 3 / Gemini 5, retry+backoff ပါ) →
     ကျန်တဲ့ None တွေ တစ်ကြောင်းချင်း fallback.
-    TTS_CONCURRENT=False (လက်ရှိ) ဆို: တစ်ကြောင်းချင်း sequential — သက်သေပြ reliable.
+    အပိုင်းသေး (1-2s) တွေကို TTS အတွက် ~12s ဆက်ပြီးမှ ထုတ်တယ် (request နည်း → မြန်).
     ပြီးမှ တကြောင်းချင်း duration တိုင်း + slot ထဲချိန် (sync logic လုံးဝမထိဘူး).
     parallel ပျက်ရင် တကြောင်းချင်းနည်းနဲ့ အလိုအလျောက်ပြန်လုပ်.
 
@@ -2081,121 +2001,6 @@ def mux_video(video_path, dubbed_mp3, out_mp4):
          "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
          "-shortest", out_mp4])
     return out_mp4
-
-
-# ------------------------------------------------- 🎨 Subtitle burn-in + Logo overlay
-# ffmpeg `subtitles` filter (libass) + `overlay` — video ကို တစ်ကြိမ် re-encode.
-# မြန်မာစာမှန်မှန်ပေါ်ဖို့ packages.txt မှာ fonts-sil-padauk ပါတယ်.
-_OV_FONT = "Padauk"
-
-
-def _ff_esc(p):
-    """subtitles='...' filter အတွင်း path escape (\\ : ')."""
-    return p.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
-
-
-def apply_overlays(stage_mp4, subs, logo_path, logo_pos, logo_size,
-                   burn_subs, sub_size, sub_pos, work_dir):
-    """_stage MP4 ပေါ် subtitle burn-in + logo overlay (optional).
-
-    subs: [{'start','end','text'}] — burn-in timeline (speedup ချိန်ပြီးသား).
-    ဘာမှမရွေးထားရင် stage_mp4 အတိုင်း ပြန်ပေးမယ်.
-    """
-    has_logo = bool(logo_path and os.path.isfile(logo_path))
-    subs = [s for s in (subs or []) if (s.get("text") or "").strip()]
-    if (not burn_subs or not subs) and not has_logo:
-        return stage_mp4
-    os.makedirs(work_dir, exist_ok=True)
-    inputs = ["-i", stage_mp4]
-    filters = []
-    vlabel = "[0:v]"
-    if burn_subs and subs:
-        srt_path = os.path.join(work_dir, "burn_subs.srt")
-        with open(srt_path, "w", encoding="utf-8") as fh:
-            fh.write(segments_to_srt(subs))
-        align = 8 if str(sub_pos).startswith("အပေါ်") else 2
-        style = (f"FontName={_OV_FONT},FontSize={int(sub_size)},"
-                 "PrimaryColour=&H00FFFFFF&,OutlineColour=&H80000000&,"
-                 f"BorderStyle=1,Outline=2,Shadow=0,MarginV=26,Alignment={align}")
-        filters.append(
-            f"{vlabel}subtitles='{_ff_esc(os.path.abspath(srt_path))}'"
-            f":force_style='{style}'[vsub]")
-        vlabel = "[vsub]"
-    if has_logo:
-        inputs += ["-i", logo_path]
-        w = max(48, min(640, int(logo_size or 160)))
-        filters.append(f"[1:v]scale={w}:-1:flags=lanczos[lg]")
-        ov = "W-w-15:H-h-15"
-        for k, v in (("↖️", "15:15"), ("↗️", "W-w-15:15"),
-                     ("↙️", "15:H-h-15"), ("↘️", "W-w-15:H-h-15")):
-            if str(logo_pos).startswith(k):
-                ov = v
-                break
-        filters.append(f"{vlabel}[lg]overlay={ov}[vout]")
-        vlabel = "[vout]"
-    out = os.path.join(work_dir, "final_overlays.mp4")
-    run(["ffmpeg", "-y", "-v", "error"] + inputs +
-        ["-filter_complex", ";".join(filters),
-         "-map", vlabel, "-map", "0:a:0?",
-         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-         "-c:a", "copy", "-movflags", "+faststart", "-shortest", out])
-    return out
-
-
-def _overlay_ui(S):
-    """🎨 Subtitle burn-in + Logo expander — step 6 / auto mode မှာ သုံး."""
-    import streamlit as st
-    with st.expander("🎨 Subtitle + Logo — ဗီဒီယိုထဲ တိုက်ရိုက်ထည့်",
-                     expanded=False):
-        st.checkbox("💬 Subtitle မီးရှို့ (ဗီဒီယိုထဲမှာ အမြဲပေါ်မယ်)",
-                    key="ov_burn",
-                    help="SRT သက်သက်အပြင် ဗီဒီယိုပုံပေါ်မှာ မြန်မာစာသားကပ်ပေးမယ်")
-        _c1, _c2 = st.columns(2)
-        with _c1:
-            st.slider("🔠 Subtitle အရွယ်အစား", 16, 40, key="ov_sub_size")
-        with _c2:
-            st.selectbox("📍 Subtitle နေရာ",
-                         ["အောက် (ပုံမှန်)", "အပေါ်"], key="ov_sub_pos")
-        st.divider()
-        _up = st.file_uploader("🖼️ Logo (PNG / JPG)", type=["png", "jpg", "jpeg"],
-                               key="ov_logo_up")
-        if _up is not None and S.get("run_id"):
-            _lp = os.path.join(
-                WORK_DIR, S.run_id,
-                "logo" + os.path.splitext(_up.name)[1].lower())
-            with open(_lp, "wb") as _fh:
-                _fh.write(_up.getbuffer())
-            S["ov_logo_path"] = _lp
-        if S.get("ov_logo_path") and os.path.isfile(S["ov_logo_path"]):
-            st.caption(f"✅ Logo ရပြီ: {os.path.basename(S['ov_logo_path'])}")
-            _c3, _c4 = st.columns(2)
-            with _c3:
-                st.selectbox("📍 Logo နေရာ",
-                             ["↘️ အောက်-ညာ", "↙️ အောက်-ဘယ်",
-                              "↗️ အပေါ်-ညာ", "↖️ အပေါ်-ဘယ်"],
-                             key="ov_logo_pos")
-            with _c4:
-                st.slider("📐 Logo အရွယ် (px)", 64, 400, key="ov_logo_size")
-            if st.button("🗑️ Logo ဖျက်", key="ov_logo_clear"):
-                try:
-                    os.remove(S["ov_logo_path"])
-                except OSError:
-                    pass
-                S["ov_logo_path"] = None
-                st.rerun()
-
-
-def _apply_overlays_from_state(stage_mp4, subs, S, work_dir):
-    """S (session state) ထဲက overlay setting တွေနဲ့ apply_overlays ခေါ်."""
-    return apply_overlays(
-        stage_mp4, subs,
-        logo_path=S.get("ov_logo_path"),
-        logo_pos=S.get("ov_logo_pos") or "↘️ အောက်-ညာ",
-        logo_size=S.get("ov_logo_size") or 160,
-        burn_subs=bool(S.get("ov_burn", True)),
-        sub_size=S.get("ov_sub_size") or 24,
-        sub_pos=S.get("ov_sub_pos") or "အောက် (ပုံမှန်)",
-        work_dir=work_dir)
 
 
 # ------------------------------------------------- 🎬 Recap Studio render engine
@@ -3126,8 +2931,6 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
                 delete_story_memory(drama_name)
                 st.toast("🗑️ မှတ်ဉာဏ်ဖျက်ပြီးပြီ")
                 st.rerun()
-    # 🎨 subtitle burn-in + logo — render မနှိပ်ခင် ဒီမှာ ရွေး
-    _overlay_ui(S)
     # --- ခလုတ်
     _has_keys = bool((groq_key or assembly_key) and api_key)
     if not (groq_key or assembly_key):
@@ -3144,7 +2947,7 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
     _spidey_card_close()
     # --- ရလဒ်
     if S.get("auto_done") and S.out_mp4 and os.path.isfile(S.out_mp4):
-        _auto_results(S, api_key, model_id)
+        _auto_results(S)
 
 
 def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
@@ -3306,10 +3109,6 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
                  "-c:a", "libmp3lame", "-b:a", "128k", amp3])
             _ckpt_save(rid, "s5_final",
                        {"out_mp4": out, "amp3": amp3, "subs": subs})
-        # 🎨 subtitle burn-in + logo overlay (optional) — checkpoint (pre-overlay)
-        # ကို မထိဘဲ သီးသန့် final ထုတ် (ထပ်မံမီးရှို့တာ ကာကွယ်)
-        out = _apply_overlays_from_state(
-            out, subs, S, os.path.join(WORK_DIR, rid, "overlays"))
         S.out_mp4, S.out_subs, S.auto_mp3 = out, subs, amp3
         S.auto_done = True
         setp(1.0, "✅ ပြီးပြီ!")
@@ -3327,8 +3126,8 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
 
 
 
-def _auto_results(S, api_key, model_id):
-    """Auto ရလဒ်: quality report + MP4 ခလုတ်အကြီး + MP3/SRT အသေး + social pack."""
+def _auto_results(S):
+    """Auto ရလဒ်: quality report + MP4 ခလုတ်အကြီး + MP3/SRT အသေး."""
     import streamlit as st
     st.success("✅ Auto ပြီးပြီ! အောက်မှာ download ချလို့ရပြီ")
     st.video(S.out_mp4)  # ⬇️ မဒေါင်းခင် preview အရင်ကြည့်
@@ -3369,8 +3168,6 @@ def _auto_results(S, api_key, model_id):
         st.download_button("⬇️ SRT", segments_to_srt(S.out_subs or []),
                            file_name=f"{_dl}.srt", mime="text/plain",
                            use_container_width=True)
-    # 📱 social pack — caption 3 ခု + hashtag (auto mode မှာပါ)
-    _tiktok_ui(S, api_key, model_id, True, do_ckpt=False)
 
 
 # ------------------------------------------------------------------ UI
@@ -3385,11 +3182,6 @@ def _init_state(st):
         "recap_timeline": None, "recap_report": None,
         "out_subs": None,
         "wizard_step": 1,
-        # 🎨 subtitle burn-in + logo overlay settings
-        "ov_burn": True, "ov_sub_size": 24, "ov_sub_pos": "အောက် (ပုံမှန်)",
-        "ov_logo_path": None, "ov_logo_pos": "↘️ အောက်-ညာ", "ov_logo_size": 160,
-        # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
-        "voice_speed": 1.0,
         # 🔊 TTS engine + Gemini voice
         "tts_engine": "🤖 Gemini", "gemini_tts_voice": "Kore",
     }
@@ -3400,14 +3192,14 @@ def _init_state(st):
 
 def main():
     import streamlit as st
-    st.set_page_config(page_title="Audio Dub Studio", page_icon="🎙️", layout="wide")
+    st.set_page_config(page_title="Audio Dub Studio", page_icon="🕷️", layout="wide")
     st.markdown(_SPIDEY_CSS, unsafe_allow_html=True)
     _init_state(st)
     S = st.session_state
 
     # ---------------------------------------------------------- sidebar
     with st.sidebar:
-        st.markdown("### 🎛️ Control Panel")
+        st.markdown("### 🕷️ Spidey Control")
         st.radio("🎛️ Mode",
                  ["🔧 Manual (တစ်ဆင့်ချင်း)", "⚡ Auto (တစ်ချက်နှိပ်)"],
                  key="app_mode",
@@ -3502,7 +3294,7 @@ def main():
         model_id = st.text_input("Gemini model", value=GEMINI_MODEL_DEFAULT)
         # 🎚️ အသံချုံ့ slider ဝှက်ထားတယ် — render mode မှာ အလုပ်မလုပ်လို့; 1.3x အသေ
         max_speed = 1.3
-        # 🔊 TTS engine — Edge (Microsoft) က 403 block ထိထားလို့ Gemini default
+        # 🔊 TTS engine — Edge (Microsoft) က 403 block မိနေလို့ Gemini default
         tts_engine = st.radio("🔊 TTS engine", ["🤖 Gemini", "🌐 Edge TTS"],
                               key="tts_engine",
                               help="Edge TTS က Microsoft block မိနေတယ် (403) — "
@@ -3516,11 +3308,6 @@ def main():
         else:
             voice = st.selectbox("အသံ", [VOICE_MALE, VOICE_FEMALE],
                                  format_func=lambda v: "🗣️ ကျား (Thiha)" if v == VOICE_MALE else "🗣️ မ (Nilar)")
-            voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
-                                    key="voice_speed",
-                                    help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်. "
-                                         "Edge TTS လမ်းမှာသာ သက်ရောက်တယ်.")
-            _set_voice_rate(voice_speed)
         _sync_tts_globals(tts_engine, api_key, S.get("gemini_tts_voice", "Kore"))
         if st.button("🔊 အသံ စမ်းနားထောင်ရန်", use_container_width=True,
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
@@ -3538,8 +3325,9 @@ def main():
             st.audio(S["_voice_test"])
         st.divider()
         st.markdown("#### ⚙️ ရွေးချယ်စရာ")
-        # 🔗/✂️ UI ဝှက်ထားတယ် (code ကျန်တယ်) — render အမြဲသုံးတော့ မလိုတော့ဘူး
-        auto_merge = False
+        # 🔗/✂️ UI ဝှက်ထားတယ် (code ကျန်တယ်) — အပိုင်းသေးပေါင်းတာ အမြဲဖွင့်
+        # (Gemini TTS မြန်ဖို့ request အရေအတွက် လျှော့ဖို့လို)
+        auto_merge = True
         auto_shorten = False
         # 🔄 fallback checkbox ဖြုတ်လိုက်တယ် — Groq ပျက်ရင် အမြဲ AssemblyAI နဲ့ဆက်မယ်
         use_fallback = True
@@ -3582,9 +3370,9 @@ def main():
     # ---------------------------------------------------------- main
     st.markdown(
         '<div class="spidey-hero">'
-        '<div class="spidey-kicker">🎙️ AI DUBBING STUDIO</div>'
+        '<div class="spidey-kicker">🕸️ FRIENDLY NEIGHBORHOOD DUBBING 🕸️</div>'
         '<div class="spidey-title">Audio Dub Studio</div>'
-        '<div class="spidey-sub">ဗီဒီယို / SRT → မြန်မာအသံ — မူရင်းအချိန်အတိုင်း</div>'
+        '<div class="spidey-sub">ဗီဒီယို / SRT → မြန်မာအသံ — မူရင်းအချိန်အတိုင်း 🕷️</div>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -3594,8 +3382,8 @@ def main():
         _auto_ui(S, api_key, groq_key, assembly_key,
                  model_id, voice, use_fallback, glossary, auto_merge)
         st.markdown(
-            '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo</div>",
+            '<div class="spidey-foot">🕷️ Audio Dub Studio — '
+            "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.1-gemini</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4298,8 +4086,6 @@ def main():
                         "🎞️ Recap render (video ချိန် + ပေါင်း)" if recap_render
                         else "🎬 မူရင်းဗီဒီယိုနဲ့ ပေါင်းရန်",
                         type="primary", use_container_width=True)
-                # 🎨 subtitle burn-in + logo — render မနှိပ်ခင် ဒီမှာ ရွေး
-                _overlay_ui(S)
                 if _go6:
                     work_asm = os.path.join(WORK_DIR, S.run_id, "asm")
                     dubbed = os.path.join(WORK_DIR, S.run_id, "dubbed_audio.mp3")
@@ -4371,10 +4157,6 @@ def main():
                             _subs = [{"start": s["start"] / speedup,
                                       "end": s["end"] / speedup,
                                       "text": s["text"]} for s in _subs]
-                        # 🎨 subtitle burn-in + logo overlay (optional)
-                        _stage = _apply_overlays_from_state(
-                            _stage, _subs, S,
-                            os.path.join(WORK_DIR, S.run_id, "overlays"))
                         if _stage != out:
                             shutil.copyfile(_stage, out)
                         S.out_subs = _subs
@@ -4435,8 +4217,60 @@ def main():
                     st.download_button("⬇️ SRT", segments_to_srt(_srt_segs),
                                        file_name=f"{_dl}.srt", mime="text/plain",
                                        use_container_width=True)
-            # ---- 📱 Social ထုတ်ရန်: caption 3 ခု + hashtag + Flow poster prompt
-            _tiktok_ui(S, api_key, model_id, is_video)
+            # ---- 📱 TikTok ထုတ်ရန်: caption + hashtag + Flow poster prompt
+            # (Gemini စာနဲ့ပဲ ထုတ်တာ — အခမဲ့; ပုံကို Flow ထဲမှာ ကိုယ်တိုင်ထုတ်)
+            if S.final_segments:
+                st.markdown("---")
+                st.markdown("### 📱 TikTok ထုတ်ရန်")
+                st.caption("Caption + hashtag + Flow AI poster prompt — "
+                           "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
+                _tt_setting = st.text_input("🏯 Background setting",
+                    value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
+                    help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
+                    key="tiktok_setting_input")
+                S["_tt_setting"] = _tt_setting
+                if st.button("✨ Caption + Prompt ထုတ်ရန်", type="primary",
+                             use_container_width=True, key="tiktok_gen_btn"):
+                    if not api_key:
+                        st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
+                    else:
+                        with st.spinner("TikTok pack ထုတ်နေတယ်..."):
+                            try:
+                                S.tiktok_pack = _tiktok_pack(
+                                    api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
+                                    S.final_segments, S.get("dl_base"),
+                                    setting_hint=_tt_setting)
+                                S["_tt_gen"] = S.get("_tt_gen", 0) + 1
+                                _manual_ckpt_save(S, is_video)
+                            except Exception as e:
+                                st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
+                _tp = S.get("tiktok_pack")
+                if _tp:
+                    _tg = S.get("_tt_gen", 0)
+
+                    def _tt_row(label, value, area_key, copy_key, height=None):
+                        _c1, _c2 = st.columns([6, 1])
+                        with _c1:
+                            if height:
+                                st.text_area(label, value, height=height, key=area_key)
+                            else:
+                                st.text_area(label, value, key=area_key)
+                        with _c2:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            _copy_button(S.get(area_key, ""), copy_key)
+
+                    _tt_row("📝 Caption (ထိထိမိမိ တစ်ကြောင်း)",
+                            _tp.get("caption", ""), f"tt_caption_{_tg}",
+                            f"tt_copy_cap_{_tg}")
+                    _tt_row("#️⃣ Hashtags",
+                            " ".join(_tp.get("hashtags", "") or []),
+                            f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
+                    _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
+                    if _pt or _ps:
+                        st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
+                    _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
+                            _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
+                            f"tt_copy_prm_{_tg}", height=180)
         _spidey_card_close()
     # ---- wizard အောက် nav: စာအပေါ်, ခလုတ် ၂ ခု ဘေးချင်းကပ်
     _cur = max(1, min(6, int(S.get("wizard_step", 1))))
@@ -4467,8 +4301,8 @@ def main():
             S["wizard_step"] = _cur + 1
             st.rerun()
     st.markdown(
-        '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo</div>",
+        '<div class="spidey-foot">🕷️ Audio Dub Studio — '
+        "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.1-gemini</span></div>",
         unsafe_allow_html=True)
 
 
