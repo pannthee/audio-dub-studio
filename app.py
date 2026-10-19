@@ -370,10 +370,17 @@ def _gemini_tts_save(api_key, model_id, voice_name, text, path):
     try:
         with open(pcm, "wb") as fh:
             fh.write(raw)
-        # Gemini TTS → 16-bit mono PCM
-        run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
-             "-ac", "1", "-i", pcm,
-             "-c:a", "libmp3lame", "-b:a", "128k", tmp])
+        # Gemini TTS → 16-bit mono PCM.
+        # NOTE: tmp ends with ".part" so output format MUST be explicit (-f mp3),
+        # otherwise ffmpeg fails with "Unable to find a suitable output format".
+        try:
+            run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
+                 "-ac", "1", "-i", pcm,
+                 "-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp])
+        except subprocess.CalledProcessError as e:
+            _ferr = (e.stderr or "").strip()[:300]
+            raise RuntimeError(
+                f"ffmpeg PCM→MP3 failed: {_ferr or e}")
         if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
             raise RuntimeError("empty audio")
         os.replace(tmp, path)
@@ -3504,12 +3511,14 @@ def main():
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
                           "အဆင့် ၅ မလုပ်ခင် အသံကြိုက်မကြိုက် စစ်လို့ရတယ်"):
             _sample = "မင်္ဂလာပါ။ ဒီအသံနဲ့ ဇာတ်လမ်းကို ပြောပြမယ်။"
+            _terr = []
             with st.spinner("အသံထုတ်နေတယ်..."):
-                _tp = tts_segment(_sample, voice, VOICE_FEMALE)
+                _tp = tts_segment(_sample, voice, VOICE_FEMALE, err_out=_terr)
             if _tp:
                 S["_voice_test"] = _tp
             else:
-                st.error("အသံထုတ်မရဘူး — network / VPN စစ်ပါ")
+                st.error("အသံထုတ်မရဘူး — " +
+                         (_terr[0] if _terr else "network / VPN စစ်ပါ"))
         if S.get("_voice_test") and os.path.isfile(S["_voice_test"]):
             st.audio(S["_voice_test"])
         st.divider()
