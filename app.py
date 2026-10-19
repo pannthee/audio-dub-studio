@@ -314,6 +314,18 @@ def _tts_voices(voice_primary, voice_fallback):
     return (voice_primary, voice_fallback)
 
 
+def _tts_parallelism():
+    """engine အလိုက် parallel TTS အရေအတွက် — Edge က Microsoft throttle
+    ကြောင့် 3, Gemini က network-bound မို့ 5 (429 မိရင် retry+backoff ရှိတယ်)."""
+    return 5 if _TTS_ENGINE == "gemini" else 3
+
+
+def _tts_line_timeout():
+    """တစ်ကြောင်းစာ TTS timeout (စက္ကန့်) — Gemini စာရှည်ရင်
+    generate ကြာတတ်လို့ 120s, Edge က 45s."""
+    return 120 if _TTS_ENGINE == "gemini" else 45
+
+
 def _gemini_tts_save(api_key, model_id, voice_name, text, path):
     """Gemini TTS → base64 PCM (24kHz) → mp3 (ffmpeg). _edge_save လို atomic write.
 
@@ -401,8 +413,9 @@ async def _tts_line_save(text, voice, path):
         await _edge_save(text, voice, path)
 
 def _tts_use_concurrent():
-    """relay (phone IP, clean) so 3-concurrent; mahout yin TTS_CONCURRENT."""
-    return TTS_CONCURRENT or bool(_RELAY_URL)
+    """relay (phone IP, clean) / Gemini engine ဆို parallel TTS;
+    Edge တိုက်ရိုက်ဆို TTS_CONCURRENT (False = တစ်ကြောင်းချင်း, throttle ကာကွယ်)."""
+    return TTS_CONCURRENT or bool(_RELAY_URL) or _TTS_ENGINE == "gemini"
 
 
 # ------------------------------------------------------------------ helpers
@@ -1569,8 +1582,8 @@ def fit_segment(src_mp3, slot, gap_after, max_speed, out_path):
 
 
 def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
-    """texts[i] → mp3 path / None. cache-hit တွေကျော်, ကျန်တာ 3 ပြိုင်နက် edge-tts
-(throttle ကာကွယ်ဖို့) + voice တစ်ခုကို ၂ ကြိမ် retry/backoff.
+    """texts[i] → mp3 path / None. cache-hit တွေကျော်, ကျန်တာ engine အလိုက်
+ပြိုင်နက်ထုတ် (Edge 3 / Gemini 5) + voice တစ်ခုကို ၂ ကြိမ် retry/backoff.
 
     စာသားထပ်နေတာတွေ dedup (ဖိုင်တူကို ပြိုင်ရေးမိမှာစိုးလို့ တစ်ခါပဲထုတ်,
     ကျန်တာက alias ပြန်ယူ). ရလဒ်အစဉ်က လိုင်းနံပါတ်အတိုင်း ပြန်စီထားတယ်.
@@ -1596,7 +1609,7 @@ def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
             jobs.append((i, t))
 
     async def _run():
-        sem = asyncio.Semaphore(3)  # Microsoft throttle ကာကွယ်ဖို့ 6→3
+        sem = asyncio.Semaphore(_tts_parallelism())  # engine အလိုက် (Edge 3 / Gemini 5)
         out = {}
         done = [0]
         first_err = []
@@ -1609,8 +1622,9 @@ def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
                         return i, vp
                     for attempt in range(2):
                         try:
-                            # hang မနေစေဖို့ 45s timeout
-                            await asyncio.wait_for(_tts_line_save(text, v, vp), timeout=45)
+                            # hang မနေစေဖို့ timeout (engine အလိုက်)
+                            await asyncio.wait_for(_tts_line_save(text, v, vp),
+                                                   timeout=_tts_line_timeout())
                             if _valid_audio(vp):
                                 return i, vp
                         except Exception as e:
@@ -2194,7 +2208,7 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
 
     fit_segment လို slot ထဲ အတင်းမထည့်ဘူး — TTS သဘာဝအရှည်အတိုင်း.
     Recap render အတွက် narration အရှည်တိုင်းဖို့ သုံးတယ်.
-    Cache လွတ်တဲ့အပိုင်းတွေကို 3 ပြိုင်နက် ထုတ်တယ် (throttle ကာကွယ်ဖို့) +
+    Cache လွတ်တဲ့အပိုင်းတွေကို engine အလိုက် ပြိုင်နက်ထုတ်တယ် (Edge 3 / Gemini 5) +
     voice တစ်ခုကို ၂ ကြိမ် retry/backoff + ကျန်တာ တစ်ကြောင်းချင်း fallback.
     """
     os.makedirs(work_segs, exist_ok=True)
@@ -2231,7 +2245,7 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
             _tick(i)
 
     async def _fetch(jobs):
-        sem = asyncio.Semaphore(3)  # Microsoft throttle ကာကွယ်ဖို့ 6→3
+        sem = asyncio.Semaphore(_tts_parallelism())  # engine အလိုက် (Edge 3 / Gemini 5)
         first_err = []
 
         async def _one(i, text):
@@ -2242,8 +2256,9 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
                         return i, vp
                     for attempt in range(2):
                         try:
-                            # hang မနေစေဖို့ 45s timeout
-                            await asyncio.wait_for(_tts_line_save(text, v, vp), timeout=45)
+                            # hang မနေစေဖို့ timeout (engine အလိုက်)
+                            await asyncio.wait_for(_tts_line_save(text, v, vp),
+                                                   timeout=_tts_line_timeout())
                             if _valid_audio(vp):
                                 return i, vp
                         except Exception as e:
