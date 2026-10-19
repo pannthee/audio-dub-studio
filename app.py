@@ -271,6 +271,20 @@ TTS_CONCURRENT = False
 # UI (Step 5 expander) က URL/token ထည့်ရင် _sync_relay_config() က ဒါတွေကို set မယ်.
 _RELAY_URL = ""
 _RELAY_TOKEN = ""
+# 🎚️ voice speed — sidebar slider က သတ်မှတ်; edge-tts rate param အဖြစ် သုံး.
+# (relay/ဖုန်း MP3 လမ်းမှာ မသက်ရောက်ဘူး — Microsoft တိုက်ရိုက်လမ်းသာ)
+_VOICE_RATE = "+0%"
+
+
+def _set_voice_rate(mult):
+    """mult: 0.7–1.3 float → edge-tts rate string (+/-N%)."""
+    global _VOICE_RATE
+    try:
+        pct = round((float(mult) - 1.0) * 100)
+    except (TypeError, ValueError):
+        pct = 0
+    pct = max(-50, min(50, pct))
+    _VOICE_RATE = f"{pct:+d}%"
 
 def _tts_use_concurrent():
     """relay (phone IP, clean) so 3-concurrent; mahout yin TTS_CONCURRENT."""
@@ -747,10 +761,11 @@ _TIKTOK_SYS = (
     "You are a TikTok content assistant for a Burmese-dubbed Chinese drama channel. "
     "The user will paste your image prompt into an AI image app (Flow) to make a 9:16 poster, "
     "and post the caption on TikTok. "
-    "Respond with STRICT JSON only: {\"caption\": str, \"hashtags\": [str], "
+    "Respond with STRICT JSON only: {\"captions\": [str, str, str], \"hashtags\": [str], "
     "\"poster_title\": str, \"poster_sub\": str, \"poster_prompt\": str}. "
     "Rules: "
-    "caption = ONE punchy Burmese hook line (under 60 chars) that stops scrollers, no hashtags inside. "
+    "captions = THREE different punchy Burmese hook lines (each under 60 chars) that stop "
+    "scrollers, no hashtags inside — vary the angle (emotional, curiosity-gap, dramatic). "
     "hashtags = 8-12 TikTok hashtags WITH the # symbol, the kind Myanmar movie-recap creators "
     "actually use (mix broad and niche drama/recap tags). "
     "poster_title = short Burmese poster title (under 25 chars), dramatic. "
@@ -807,13 +822,83 @@ def _tiktok_pack(api_key, model_id, segments, dl_base, setting_hint=""):
         spec += ('. No other text in the image. If Burmese script cannot be rendered '
                  'cleanly, leave the top third empty instead.')
         prompt = (prompt + spec).strip()
+    caps = data.get("captions") or []
+    if isinstance(caps, str):
+        caps = [caps]
+    if not caps and data.get("caption"):
+        caps = [data["caption"]]  # backward compat (old format)
+    captions = [str(c).strip() for c in caps if str(c).strip()][:3]
     return {
-        "caption": str(data.get("caption") or "").strip(),
+        "captions": captions,
         "hashtags": [str(t).strip() for t in tags if str(t).strip()][:14],
         "poster_title": title,
         "poster_sub": sub,
         "poster_prompt": prompt,
     }
+
+
+def _tiktok_ui(S, api_key, model_id, is_video, do_ckpt=True):
+    """📱 Social ပေါ်တင်ရန် — caption 3 ခု + hashtag + Flow poster prompt.
+
+    step 6 (manual) ရော _auto_results ရော ဒါကိုပဲ သုံး.
+    """
+    import streamlit as st
+    segments = S.get("out_subs") or S.get("final_segments")
+    if not segments:
+        return
+    st.markdown("---")
+    st.markdown("### 📱 Social ပေါ်တင်ရန်")
+    st.caption("Caption ၃ ခု + hashtag + Flow AI poster prompt — "
+               "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
+    _tt_setting = st.text_input("🏯 Background setting",
+        value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
+        help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
+        key="tiktok_setting_input")
+    S["_tt_setting"] = _tt_setting
+    if st.button("✨ Caption + Prompt ထုတ်ရန်", type="primary",
+                 use_container_width=True, key="tiktok_gen_btn"):
+        if not api_key:
+            st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
+        else:
+            with st.spinner("TikTok pack ထုတ်နေတယ်..."):
+                try:
+                    S.tiktok_pack = _tiktok_pack(
+                        api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
+                        segments, S.get("dl_base"),
+                        setting_hint=_tt_setting)
+                    S["_tt_gen"] = S.get("_tt_gen", 0) + 1
+                    if do_ckpt:
+                        _manual_ckpt_save(S, is_video)
+                except Exception as e:
+                    st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
+    _tp = S.get("tiktok_pack")
+    if _tp:
+        _tg = S.get("_tt_gen", 0)
+
+        def _tt_row(label, value, area_key, copy_key, height=None):
+            _c1, _c2 = st.columns([6, 1])
+            with _c1:
+                if height:
+                    st.text_area(label, value, height=height, key=area_key)
+                else:
+                    st.text_area(label, value, key=area_key)
+            with _c2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                _copy_button(S.get(area_key, ""), copy_key)
+
+        for _ci, _cap in enumerate(_tp.get("captions") or [], 1):
+            _tt_row(f"📝 Caption {_ci} (ထိထိမိမိ တစ်ကြောင်း)",
+                    _cap, f"tt_caption_{_tg}_{_ci}",
+                    f"tt_copy_cap_{_tg}_{_ci}")
+        _tt_row("#️⃣ Hashtags",
+                " ".join(_tp.get("hashtags", "") or []),
+                f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
+        _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
+        if _pt or _ps:
+            st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
+        _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
+                _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
+                f"tt_copy_prm_{_tg}", height=180)
 
 
 def merge_tiny_segments(segments, max_gap=0.5, min_slot=1.5, max_merged=8.0):
@@ -1277,7 +1362,7 @@ async def _edge_save(text, voice, path):
     import edge_tts
     tmp = path + ".part"
     try:
-        await edge_tts.Communicate(text, voice).save(tmp)
+        await edge_tts.Communicate(text, voice, rate=_VOICE_RATE).save(tmp)
         if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
             raise RuntimeError("empty audio")
         os.replace(tmp, path)
@@ -1290,9 +1375,10 @@ async def _edge_save(text, voice, path):
 
 
 def _tts_cache_path(text, voice_primary):
-    """edge-tts cache file path — key = voice + text."""
-    # edge2: — အရင် key နဲ့ သိမ်းထားတဲ့ တစ်ဝက်ဖိုင်တွေ (poisoned cache) ကျော်ဖို့
-    key = hashlib.sha1(f"edge2:{voice_primary}:{text}".encode("utf-8")).hexdigest()[:16]
+    """edge-tts cache file path — key = voice + rate + text."""
+    # edge3: — rate မတူရင် cache မရောစေဖို့ (အရင် edge2 key တွေနဲ့ မတူ)
+    key = hashlib.sha1(
+        f"edge3:{voice_primary}:{_VOICE_RATE}:{text}".encode("utf-8")).hexdigest()[:16]
     return os.path.join(CACHE_TTS, f"{key}.mp3")
 
 
@@ -2910,7 +2996,7 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
     _spidey_card_close()
     # --- ရလဒ်
     if S.get("auto_done") and S.out_mp4 and os.path.isfile(S.out_mp4):
-        _auto_results(S)
+        _auto_results(S, api_key, model_id)
 
 
 def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
@@ -3093,8 +3179,8 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
 
 
 
-def _auto_results(S):
-    """Auto ရလဒ်: quality report + MP4 ခလုတ်အကြီး + MP3/SRT အသေး."""
+def _auto_results(S, api_key, model_id):
+    """Auto ရလဒ်: quality report + MP4 ခလုတ်အကြီး + MP3/SRT အသေး + social pack."""
     import streamlit as st
     st.success("✅ Auto ပြီးပြီ! အောက်မှာ download ချလို့ရပြီ")
     st.video(S.out_mp4)  # ⬇️ မဒေါင်းခင် preview အရင်ကြည့်
@@ -3135,6 +3221,8 @@ def _auto_results(S):
         st.download_button("⬇️ SRT", segments_to_srt(S.out_subs or []),
                            file_name=f"{_dl}.srt", mime="text/plain",
                            use_container_width=True)
+    # 📱 social pack — caption 3 ခု + hashtag (auto mode မှာပါ)
+    _tiktok_ui(S, api_key, model_id, True, do_ckpt=False)
 
 
 # ------------------------------------------------------------------ UI
@@ -3152,6 +3240,8 @@ def _init_state(st):
         # 🎨 subtitle burn-in + logo overlay settings
         "ov_burn": True, "ov_sub_size": 24, "ov_sub_pos": "အောက် (ပုံမှန်)",
         "ov_logo_path": None, "ov_logo_pos": "↘️ အောက်-ညာ", "ov_logo_size": 160,
+        # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
+        "voice_speed": 1.0,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3264,6 +3354,12 @@ def main():
         max_speed = 1.3
         voice = st.selectbox("အသံ", [VOICE_MALE, VOICE_FEMALE],
                              format_func=lambda v: "🗣️ ကျား (Thiha)" if v == VOICE_MALE else "🗣️ မ (Nilar)")
+        voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
+                                key="voice_speed",
+                                help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်. "
+                                     "Microsoft TTS တိုက်ရိုက်လမ်းမှာသာ သက်ရောက်တယ် "
+                                     "(ဖုန်း MP3 / relay လမ်းမှာ မရ)")
+        _set_voice_rate(voice_speed)
         if st.button("🔊 အသံ စမ်းနားထောင်ရန်", use_container_width=True,
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
                           "အဆင့် ၅ မလုပ်ခင် အသံကြိုက်မကြိုက် စစ်လို့ရတယ်"):
@@ -4175,60 +4271,8 @@ def main():
                     st.download_button("⬇️ SRT", segments_to_srt(_srt_segs),
                                        file_name=f"{_dl}.srt", mime="text/plain",
                                        use_container_width=True)
-            # ---- 📱 TikTok ထုတ်ရန်: caption + hashtag + Flow poster prompt
-            # (Gemini စာနဲ့ပဲ ထုတ်တာ — အခမဲ့; ပုံကို Flow ထဲမှာ ကိုယ်တိုင်ထုတ်)
-            if S.final_segments:
-                st.markdown("---")
-                st.markdown("### 📱 TikTok ထုတ်ရန်")
-                st.caption("Caption + hashtag + Flow AI poster prompt — "
-                           "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
-                _tt_setting = st.text_input("🏯 Background setting",
-                    value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
-                    help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
-                    key="tiktok_setting_input")
-                S["_tt_setting"] = _tt_setting
-                if st.button("✨ Caption + Prompt ထုတ်ရန်", type="primary",
-                             use_container_width=True, key="tiktok_gen_btn"):
-                    if not api_key:
-                        st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
-                    else:
-                        with st.spinner("TikTok pack ထုတ်နေတယ်..."):
-                            try:
-                                S.tiktok_pack = _tiktok_pack(
-                                    api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
-                                    S.final_segments, S.get("dl_base"),
-                                    setting_hint=_tt_setting)
-                                S["_tt_gen"] = S.get("_tt_gen", 0) + 1
-                                _manual_ckpt_save(S, is_video)
-                            except Exception as e:
-                                st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
-                _tp = S.get("tiktok_pack")
-                if _tp:
-                    _tg = S.get("_tt_gen", 0)
-
-                    def _tt_row(label, value, area_key, copy_key, height=None):
-                        _c1, _c2 = st.columns([6, 1])
-                        with _c1:
-                            if height:
-                                st.text_area(label, value, height=height, key=area_key)
-                            else:
-                                st.text_area(label, value, key=area_key)
-                        with _c2:
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            _copy_button(S.get(area_key, ""), copy_key)
-
-                    _tt_row("📝 Caption (ထိထိမိမိ တစ်ကြောင်း)",
-                            _tp.get("caption", ""), f"tt_caption_{_tg}",
-                            f"tt_copy_cap_{_tg}")
-                    _tt_row("#️⃣ Hashtags",
-                            " ".join(_tp.get("hashtags", "") or []),
-                            f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
-                    _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
-                    if _pt or _ps:
-                        st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
-                    _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
-                            _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
-                            f"tt_copy_prm_{_tg}", height=180)
+            # ---- 📱 Social ထုတ်ရန်: caption 3 ခု + hashtag + Flow poster prompt
+            _tiktok_ui(S, api_key, model_id, is_video)
         _spidey_card_close()
     # ---- wizard အောက် nav: စာအပေါ်, ခလုတ် ၂ ခု ဘေးချင်းကပ်
     _cur = max(1, min(6, int(S.get("wizard_step", 1))))

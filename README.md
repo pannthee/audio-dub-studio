@@ -10,6 +10,8 @@
 > - 💬 **Subtitle burn-in** — မြန်မာစာသားကို ဗီဒီယိုထဲ တိုက်ရိုက်ကပ် (Padauk font၊ အရွယ်/အပေါ်-အောက် ရွေး)
 > - 🖼️ **Logo overlay** — ကိုယ့် logo တင်၊ ထောင့် ၄ ထောင့်က ရွေး၊ အရွယ်ချိန်
 > - 🌙 **Design အသစ်** — midnight studio theme
+> - 🎚️ **Voice speed** — အသံအမြန်နှုန်း ကိုယ်တိုင်ချိန် (0.7x–1.3x, sidebar)
+> - 📱 **Social pack** — caption ၃ ခု + hashtag + poster prompt (manual + auto နှစ်မျိုးလုံး)
 
 ## လုပ်ဆောင်ချက်
 
