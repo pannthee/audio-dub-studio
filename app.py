@@ -150,6 +150,94 @@ div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(56,189,248
 .spidey-foot { text-align: center; color: #5A6480; font-size: .8rem; padding: 20px 0 8px; }
 </style>"""
 
+# ---------------------------------------------------------- ✨ Premium overrides
+# midnight theme အပေါ် premium အလွှာ — glass cards, gradient buttons,
+# glow accents, refined inputs/sidebar. နောက်မှ load လုပ်လို့ cascade နိုင်တယ်.
+_PREMIUM_CSS = """<style>
+/* --- app background: deeper navy + layered glows --- */
+.stApp {
+    background:
+        radial-gradient(1100px 500px at 85% -10%, rgba(56,189,248,.14), transparent 60%),
+        radial-gradient(900px 560px at 0% 110%, rgba(129,140,248,.12), transparent 60%),
+        radial-gradient(600px 300px at 50% 45%, rgba(56,189,248,.05), transparent 70%),
+        #070A12;
+}
+/* --- hero: badge kicker + glowing gradient title --- */
+.spidey-kicker {
+    display: inline-block; padding: 4px 14px; border-radius: 999px;
+    background: rgba(56,189,248,.10); border: 1px solid rgba(56,189,248,.35);
+    color: #7DD3FC !important;
+}
+.spidey-title {
+    filter: drop-shadow(0 6px 24px rgba(56,189,248,.35));
+}
+.spidey-sub { color: #94A3C4 !important; }
+/* --- cards: glass + soft shadow --- */
+.spidey-card {
+    background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.02)) !important;
+    border: 1px solid rgba(148,163,216,.18) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 18px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06) !important;
+    backdrop-filter: blur(6px);
+}
+/* --- buttons: gradient + lift on hover --- */
+div.stButton > button, div.stDownloadButton > button {
+    border-radius: 12px !important; font-weight: 600 !important;
+    border: 1px solid rgba(148,163,216,.25) !important;
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
+}
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(56,189,248,.25) !important;
+    filter: brightness(1.08);
+}
+div.stButton > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {
+    background: linear-gradient(120deg, #0EA5E9, #6366F1) !important;
+    border: none !important; color: #fff !important;
+    box-shadow: 0 10px 26px rgba(56,189,248,.35) !important;
+}
+/* --- inputs: rounded + cyan focus ring --- */
+div[data-baseweb="input"] > div, div[data-baseweb="select"] > div,
+div[data-baseweb="textarea"] > div {
+    border-radius: 12px !important;
+    border-color: rgba(148,163,216,.25) !important;
+    background: rgba(255,255,255,.03) !important;
+}
+div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within,
+div[data-baseweb="textarea"] > div:focus-within {
+    border-color: #38BDF8 !important;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.22) !important;
+}
+/* --- sidebar: dark glass --- */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, rgba(19,24,38,.97), rgba(10,13,23,.97)) !important;
+    border-right: 1px solid rgba(148,163,216,.15) !important;
+}
+section[data-testid="stSidebar"] h3, section[data-testid="stSidebar"] h4 {
+    letter-spacing: .4px;
+}
+/* --- progress bar: gradient --- */
+div[data-testid="stProgress"] > div > div > div {
+    background: linear-gradient(90deg, #38BDF8, #818CF8) !important;
+    border-radius: 999px !important;
+}
+/* --- step pills: current glows cyan --- */
+.spidey-step.current {
+    background: linear-gradient(135deg, #0EA5E9, #6366F1) !important;
+    border-color: rgba(125,211,252,.8) !important;
+    box-shadow: 0 0 18px rgba(56,189,248,.55) !important;
+}
+/* --- expander / alerts: softer corners --- */
+div[data-testid="stExpander"] { border-radius: 14px !important;
+    border-color: rgba(148,163,216,.18) !important; }
+div[data-testid="stAlert"] { border-radius: 14px !important; }
+/* --- scrollbar --- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(125,211,252,.25); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+::selection { background: rgba(56,189,248,.35); }
+</style>"""
+
 
 _card_ctx_stack = []
 
@@ -3144,8 +3232,9 @@ def _init_state(st):
         "recap_timeline": None, "recap_report": None,
         "out_subs": None,
         "wizard_step": 1,
-        # 🎛️ app mode (Dubbing / Recap / Recap+Dub)
-        "app_mode": "🎬+🎙️ Recap + Dub Mode",
+        # 🎛️ work mode (Dubbing / Recap / Recap+Dub) — မူရင်း app_mode
+        # (Manual/Auto radio) နဲ့ key မတိုက်အောင် သီးခြား နာမည်သုံး
+        "work_mode": "🎬+🎙️ Recap + Dub Mode",
         # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
         "voice_speed": 1.0,
     }
@@ -3156,14 +3245,15 @@ def _init_state(st):
 
 def main():
     import streamlit as st
-    st.set_page_config(page_title="Audio Dub Studio", page_icon="🕷️", layout="wide")
+    st.set_page_config(page_title="Audio Dub Studio", page_icon="🎙️", layout="wide")
     st.markdown(_SPIDEY_CSS, unsafe_allow_html=True)
+    st.markdown(_PREMIUM_CSS, unsafe_allow_html=True)
     _init_state(st)
     S = st.session_state
 
     # ---------------------------------------------------------- sidebar
     with st.sidebar:
-        st.markdown("### 🕷️ Spidey Control")
+        st.markdown("### 🎙️ Studio Control")
         st.radio("🎛️ Mode",
                  ["🔧 Manual (တစ်ဆင့်ချင်း)", "⚡ Auto (တစ်ချက်နှိပ်)"],
                  key="app_mode",
@@ -3291,15 +3381,15 @@ def main():
         # 🔄 fallback checkbox ဖြုတ်လိုက်တယ် — Groq ပျက်ရင် အမြဲ AssemblyAI နဲ့ဆက်မယ်
         use_fallback = True
         st.markdown("##### 🎛️ Mode")
-        app_mode = st.radio(
+        work_mode = st.radio(
             "Mode", ["🎙️ Dubbing Mode", "🎬 Recap Mode",
                      "🎬+🎙️ Recap + Dub Mode"],
-            key="app_mode", label_visibility="collapsed",
+            key="work_mode", label_visibility="collapsed",
             help="🎙️ Dubbing = အသံကို မူရင်းအချိန်ကွက်ထဲ ထည့် (video မပြောင်း). "
                  "🎬 Recap = အသံ သဘာဝအတိုင်းထား, video ကို အသံနဲ့ကိုက်အောင် ချိန်. "
                  "🎬+🎙️ = နှစ်မျိုးလုံး — အောက်က Recap render checkbox နဲ့ ရွေး.")
-        _mode_dub_only = (app_mode == "🎙️ Dubbing Mode")
-        _mode_recap_only = (app_mode == "🎬 Recap Mode")
+        _mode_dub_only = (work_mode == "🎙️ Dubbing Mode")
+        _mode_recap_only = (work_mode == "🎬 Recap Mode")
         st.markdown("##### 🎬 Recap Studio")
         # 🎬 recap-style UI ဝှက်ထားတယ် (code ကျန်တယ်) — အခု စာကြောင်းချင်းပြန်ပဲ
         recap_style = False
@@ -3361,7 +3451,7 @@ def main():
                  recap=recap_render)
         st.markdown(
             '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.3</span></div>",
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.4</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4280,7 +4370,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.3</span></div>",
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.4</span></div>",
         unsafe_allow_html=True)
 
 
