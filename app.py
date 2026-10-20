@@ -843,8 +843,14 @@ _TIKTOK_SYS = (
     "Respond with STRICT JSON only: {\"captions\": [str, str, str], \"hashtags\": [str], "
     "\"poster_title\": str, \"poster_sub\": str, \"poster_prompt\": str}. "
     "Rules: "
-    "captions = THREE different punchy Burmese hook lines (each under 60 chars) that stop "
-    "scrollers, no hashtags inside — vary the angle (emotional, curiosity-gap, dramatic). "
+    "captions = THREE viral 3-SECOND HOOKS in Burmese for TikTok / Reels / Shorts. "
+    "Each hook is ONE line, MAX 40 chars — readable in 3 seconds — and must make a "
+    "scroller STOP. Write like the top viral Myanmar movie-recap pages, using proven "
+    "hook patterns: (1) curiosity gap / open loop that withholds the payoff, "
+    "(2) shock or twist tease WITHOUT spoiling the ending, (3) high-stakes question "
+    "or bold claim. Base each hook on the single most dramatic moment in the lines. "
+    "The 3 hooks MUST use 3 different patterns. NO boring plot summaries, NO filler "
+    "like 'ဒီဇာတ်လမ်းမှာတော့', NO hashtags inside the hooks. "
     "hashtags = EXACTLY 5 hashtags in ENGLISH only, WITH the # symbol — the kind of tags "
     "movie-recap channels use (mix broad reach tags and niche drama/recap tags). "
     "poster_title = short Burmese poster title (under 25 chars), dramatic. "
@@ -929,15 +935,15 @@ def _tiktok_ui(S, api_key, model_id, is_video, do_ckpt=True):
         return
     st.markdown("---")
     st.markdown("### 📱 Social ပေါ်တင်ရန်")
-    st.caption("Caption ၃ ခု + English hashtag ၅ ခု + Flow AI poster prompt — "
-               "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
+    st.caption("🔥 3-sec Hook caption ၃ ခု (viral ပုံစံ) + English hashtag ၅ ခု + "
+               "Flow AI poster prompt — dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
     _tt_setting = st.text_input("🏯 Background setting",
         value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
         help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
         key="tiktok_setting_input")
     S["_tt_setting"] = _tt_setting
-    _gen_label = ("🔁 Retry — Caption အသစ် ပြန်ထုတ်" if S.get("tiktok_pack")
-                  else "✨ Caption + Hashtag ထုတ်ရန်")
+    _gen_label = ("🔁 Retry — Hook အသစ် ပြန်ထုတ်" if S.get("tiktok_pack")
+                  else "✨ Hook Caption + Hashtag ထုတ်ရန်")
     if st.button(_gen_label, type="primary",
                  use_container_width=True, key="tiktok_gen_btn"):
         if not api_key:
@@ -970,7 +976,7 @@ def _tiktok_ui(S, api_key, model_id, is_video, do_ckpt=True):
                 _copy_button(S.get(area_key, ""), copy_key)
 
         for _ci, _cap in enumerate(_tp.get("captions") or [], 1):
-            _tt_row(f"📝 Caption {_ci}",
+            _tt_row(f"🔥 Hook {_ci} (3-sec)",
                     _cap, f"tt_caption_{_tg}_{_ci}",
                     f"tt_copy_cap_{_tg}_{_ci}")
         _tt_row("#️⃣ Hashtags (English)",
@@ -2197,26 +2203,6 @@ def apply_video_style(in_mp4, out_mp4, sty, segments):
             "-c:a", "copy", "-movflags", "+faststart", out_mp4]
     run(cmd)
     return out_mp4
-
-
-def _style_preview(video_path, sty, t, out_jpg, sample_text, duration):
-    """Live preview: အချိန် t က frame တစ်ခု style အပြည့်နဲ့ ထုတ် (720px)."""
-    W, H = _video_dims(video_path)
-    ass_path = None
-    if sty["sub_on"]:
-        ass_path = out_jpg + ".ass"
-        _write_ass([{"start": 0.0, "end": max(1.0, float(duration or 1.0)),
-                     "text": sample_text}], sty, ass_path, (W, H))
-    graph, vout = _style_filtergraph(sty, ass_path, W)
-    graph = (graph + ";" if graph else "") + f"{vout}scale=720:-2[pv]"
-    cmd = ["ffmpeg", "-y", "-v", "error", "-ss", f"{float(t):.2f}",
-           "-i", video_path]
-    if sty["logo_path"] and os.path.isfile(sty["logo_path"]):
-        cmd += ["-i", sty["logo_path"]]
-    cmd += ["-filter_complex", graph, "-map", "[pv]",
-            "-frames:v", "1", "-q:v", "3", out_jpg]
-    run(cmd)
-    return out_jpg
 
 
 # ------------------------------------------------- 🎬 Recap Studio render engine
@@ -3470,7 +3456,6 @@ def _init_state(st):
         "vs_sub_bgcolor": "#000000", "vs_sub_bgop": 60,
         "vs_sub_pos": "⬇️ အောက်", "vs_logo_path": "",
         "vs_logo_pos": "↗️ ညာအပေါ်", "vs_logo_size": 12,
-        "vs_preview_t": 1.0,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3478,7 +3463,7 @@ def _init_state(st):
 
 
 def _video_style_panel(S):
-    """🎨 Step 6 style panel: mirror/blur/subtitle/logo + 👁️ live preview.
+    """🎨 Step 6 style panel: mirror/blur/subtitle/logo settings.
 
     settings အားလုံး vs_* session keys နဲ့ သိမ်း — render က
     _current_video_style(S) နဲ့ ပြန်ဖတ်တယ်.
@@ -3539,36 +3524,6 @@ def _video_style_panel(S):
                 S["vs_logo_path"] = ""
                 S["_vs_logo_name"] = ""
                 st.rerun()
-    # 👁️ live preview
-    if S.video_path and os.path.isfile(S.video_path):
-        _maxv = max(1.0, float(S.duration or 1.0))
-        if float(S.get("vs_preview_t") or 1.0) > _maxv:
-            S["vs_preview_t"] = 1.0
-        st.slider("👁️ Preview အချိန် (စက္ကန့်)", 0.0, _maxv, step=0.5,
-                  key="vs_preview_t")
-        _sty = _current_video_style(S)
-        _sample = "နမူနာ စာတန်း"
-        for _sg in (S.final_segments or []):
-            if float(_sg.get("start", 0)) <= float(S.get("vs_preview_t") or 0) \
-                    <= float(_sg.get("end", 0)):
-                _sample = str(_sg.get("text") or _sample)
-                break
-        _hk = hashlib.md5(json.dumps(
-            [S.video_path, S.get("vs_preview_t"), _sty],
-            sort_keys=True, default=str).encode()).hexdigest()[:12]
-        _jpg = os.path.join(WORK_DIR, S.run_id, f"preview_{_hk}.jpg")
-        if not os.path.isfile(_jpg):
-            try:
-                _style_preview(S.video_path, _sty,
-                               float(S.get("vs_preview_t") or 1.0),
-                               _jpg, _sample, S.duration)
-            except Exception as _e:
-                st.caption(f"Preview ထုတ်မရဘူး: {_e}")
-        if os.path.isfile(_jpg):
-            st.image(_jpg, caption="👁️ Live Preview — setting ချိန်တိုင်း ပြမယ်",
-                     use_container_width=True)
-
-
 def main():
     import streamlit as st
     st.set_page_config(page_title="Audio Dub Studio", page_icon="🎙️", layout="wide")
@@ -3777,7 +3732,7 @@ def main():
                  recap=recap_render)
         st.markdown(
             '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.7</span></div>",
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.8</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4664,7 +4619,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.7</span></div>",
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.8</span></div>",
         unsafe_allow_html=True)
 
 
