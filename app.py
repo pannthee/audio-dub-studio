@@ -2053,6 +2053,10 @@ def _current_video_style(S):
     return {
         "mirror": bool(S.get("vs_mirror")),
         "blur": int(S.get("vs_blur") or 0),
+        "blur_x": int(S.get("vs_blur_x") or 0),
+        "blur_y": 80 if S.get("vs_blur_y") is None else int(S.get("vs_blur_y")),
+        "blur_w": 100 if S.get("vs_blur_w") is None else int(S.get("vs_blur_w")),
+        "blur_h": 20 if S.get("vs_blur_h") is None else int(S.get("vs_blur_h")),
         "sub_on": bool(S.get("vs_sub_on", True)),
         "sub_size": float(S.get("vs_sub_size") or 4.5),
         "sub_color": S.get("vs_sub_color") or "#FFFFFF",
@@ -2147,11 +2151,17 @@ def _style_filtergraph(sty, ass_path, video_w):
         parts.append(f"{cur}hflip{o}")
         cur = o
     if sty["blur"] > 0:
+        # 🔲 blur နေရာ လွတ်လွတ်လပ်လပ် ရွေးနိုင် (x/y/w/h = frame ရဲ့ %)
+        _bx = max(0, min(95, int(sty.get("blur_x", 0))))
+        _by = max(0, min(95, int(sty.get("blur_y", 80))))
+        _bw = max(5, min(100 - _bx, int(sty.get("blur_w", 100))))
+        _bh = max(5, min(100 - _by, int(sty.get("blur_h", 20))))
         a, b, c, o = lab(), lab(), lab(), lab()
         parts.append(f"{cur}split{a}{b}")
-        parts.append(f"{b}crop=w=iw:h=ih*0.20:x=0:y=ih*0.80,"
+        parts.append(f"{b}crop=w=iw*{_bw}/100:h=ih*{_bh}/100:"
+                     f"x=iw*{_bx}/100:y=ih*{_by}/100,"
                      f"gblur=sigma={max(1, int(sty['blur']))}{c}")
-        parts.append(f"{a}{c}overlay=0:H-h{o}")
+        parts.append(f"{a}{c}overlay=x=W*{_bx}/100:y=H*{_by}/100{o}")
         cur = o
     if sty["sub_on"] and ass_path:
         o = lab()
@@ -3453,7 +3463,9 @@ def _init_state(st):
         # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
         "voice_speed": 1.0,
         # 🎨 video style (step 6 panel)
-        "vs_mirror": False, "vs_blur": 0, "vs_sub_on": True,
+        "vs_mirror": False, "vs_blur": 0,
+        "vs_blur_x": 0, "vs_blur_y": 80, "vs_blur_w": 100, "vs_blur_h": 20,
+        "vs_sub_on": True,
         "vs_sub_size": 4.5, "vs_sub_color": "#FFFFFF", "vs_sub_bg": True,
         "vs_sub_bgcolor": "#000000", "vs_sub_bgop": 60,
         "vs_sub_pos": "⬇️ အောက်", "vs_logo_path": "",
@@ -3477,10 +3489,18 @@ def _video_style_panel(S):
     with _c1:
         st.checkbox("🪞 Mirror — ဘယ်/ညာ ပြောင်းပြန်", key="vs_mirror",
                     help="Copyright bypass အတွက် သုံးတတ်တယ်")
-        st.slider("🌫️ Blur — မူရင်း subtitle နေရာဖုံး (အောက်ပိုင်း 20%)",
-                  0, 40, key="vs_blur",
+        st.slider("🌫️ Blur — မှုန်ဝါးအား", 0, 40, key="vs_blur",
                   help="0 = မဖုံး. မူရင်း hardcoded subtitle တွေကို ဖုံးဖို့ "
-                       "အောက်ပိုင်းကို မှုန်ဝါးပေးမယ်")
+                       "လိုတဲ့နေရာကို မှုန်ဝါးပေးမယ် — နေရာကို အောက်မှာ ရွေး")
+        if int(S.get("vs_blur") or 0) > 0:
+            st.caption("🔲 Blur နေရာ (frame ရဲ့ % နဲ့) — Preview မှာ ကြည့်ချိန်")
+            _bx1, _bx2 = st.columns(2)
+            with _bx1:
+                st.slider("↔️ X (ဘယ်→ညာ)", 0, 95, key="vs_blur_x")
+                st.slider("⬌ အကျယ် %", 5, 100, key="vs_blur_w")
+            with _bx2:
+                st.slider("↕️ Y (အပေါ်→အောက်)", 0, 95, key="vs_blur_y")
+                st.slider("⬍ အမြင့် %", 5, 60, key="vs_blur_h")
         st.selectbox("💬 Subtitle နေရာ",
                      ["⬇️ အောက်", "⏺ အလယ်", "⬆️ အပေါ်"], key="vs_sub_pos")
     with _c2:
@@ -3757,7 +3777,7 @@ def main():
                  recap=recap_render)
         st.markdown(
             '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.6</span></div>",
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.7</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4644,7 +4664,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.6</span></div>",
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.7</span></div>",
         unsafe_allow_html=True)
 
 
