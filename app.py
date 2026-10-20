@@ -57,102 +57,97 @@ os.makedirs(WORK_DIR, exist_ok=True)
 
 # ---------------------------------------------------------- 🕷️ Spider-Man theme
 _SPIDEY_CSS = """<style>
-@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
-
-/* --- နောက်ခံ: ညမှောင် + spider web --- */
+/* --- နောက်ခံ: midnight navy + soft glows --- */
 .stApp {
-    background-color: #0A0A14;
+    background-color: #0B0E17;
     background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%23E62429' stroke-opacity='0.06'%3E%3Ccircle cx='260' cy='0' r='55'/%3E%3Ccircle cx='260' cy='0' r='105'/%3E%3Ccircle cx='260' cy='0' r='155'/%3E%3Ccircle cx='260' cy='0' r='205'/%3E%3Cpath d='M260 0 L0 260 M260 0 L90 260 M260 0 L175 260 M260 0 L260 260 M260 0 L0 175 M260 0 L0 90'/%3E%3C/g%3E%3C/svg%3E"),
-        radial-gradient(1000px 480px at 88% -5%, rgba(230,36,41,.12), transparent 60%),
-        radial-gradient(820px 520px at 4% 108%, rgba(43,92,230,.12), transparent 60%);
+        radial-gradient(900px 420px at 85% -5%, rgba(56,189,248,.10), transparent 60%),
+        radial-gradient(760px 480px at 5% 105%, rgba(129,140,248,.10), transparent 60%);
     background-repeat: no-repeat;
-    background-position: top right;
 }
 
 /* --- hero --- */
-.spidey-hero { text-align: center; padding: 20px 0 4px; }
-.spidey-kicker { color: #8A93B8; font-size: .78rem; letter-spacing: 3px; font-weight: 700; }
+.spidey-hero { text-align: center; padding: 22px 0 6px; }
+.spidey-kicker { color: #7DD3FC; font-size: .78rem; letter-spacing: 4px; font-weight: 700; }
 .spidey-title {
-    font-family: 'Bangers', 'Arial Black', sans-serif;
-    font-size: 3.2rem; letter-spacing: 3px; color: #F03A3A;
-    -webkit-text-stroke: 1.5px #5d0a0d;
-    text-shadow: 3px 3px 0 #1D4ED8, 7px 7px 0 rgba(0,0,0,.55), 0 0 34px rgba(230,36,41,.55);
-    transform: rotate(-1.5deg); margin: 2px 0;
+    font-size: 3rem; letter-spacing: 1px; font-weight: 900;
+    background: linear-gradient(120deg, #E0F2FE 20%, #38BDF8 55%, #818CF8 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin: 4px 0;
 }
-.spidey-sub { color: #B9C4E8; font-size: 1rem; margin-top: 8px; }
-@media (max-width: 640px){ .spidey-title{ font-size: 2.2rem; } }
+.spidey-sub { color: #A5B4D4; font-size: 1rem; margin-top: 8px; }
+@media (max-width: 640px){ .spidey-title{ font-size: 2.1rem; } }
 
 /* --- အဆင့်ခြေရာ (step tracker) --- */
 .spidey-steps { display: flex; gap: 8px; margin: 16px 0 6px; flex-wrap: wrap; }
 .spidey-step { flex: 1 1 0; min-width: 96px; text-align: center; padding: 9px 4px;
     border-radius: 14px; font-size: .8rem; font-weight: 700;
-    background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.13); color: #9AA0BC; }
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); color: #8B94B3; }
 .spidey-step .n { display: block; font-size: 1.1rem; margin-bottom: 2px; }
-.spidey-step.done { background: rgba(230,36,41,.16); border-color: rgba(230,36,41,.7); color: #FFB4B6; }
-.spidey-step.current { background: linear-gradient(135deg,#E62429,#9E1116); color: #fff;
-    border-color: #FF7A7A; box-shadow: 0 0 18px rgba(230,36,41,.65); }
+.spidey-step.done { background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.55); color: #BAE6FD; }
+.spidey-step.current { background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
+    border-color: #7DD3FC; box-shadow: 0 0 18px rgba(56,189,248,.45); }
 .spidey-step.skip { opacity: .4; }
 
-/* --- ကတ် (st.container(border=True) အစစ် — အထဲမှာ content တကယ်ရှိတယ်) --- */
+/* --- ကတ် (st.container(border=True) အစစ်) --- */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(18,18,36,.78);
-    border: 1px solid rgba(230,36,41,.30) !important;
+    background: rgba(17,22,38,.78);
+    border: 1px solid rgba(56,189,248,.22) !important;
     border-radius: 18px;
     box-shadow: 0 8px 28px rgba(0,0,0,.5);
 }
 .spidey-stephead {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 16px; margin-bottom: 6px;
-    background: linear-gradient(90deg, rgba(230,36,41,.25), rgba(43,92,230,.14));
-    border: 1px solid rgba(230,36,41,.28);
+    background: linear-gradient(90deg, rgba(56,189,248,.16), rgba(129,140,248,.10));
+    border: 1px solid rgba(56,189,248,.22);
     border-radius: 12px;
     font-size: 1.12rem; font-weight: 800; color: #fff;
 }
 .spidey-num { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#F03A3A,#8f1013); color: #fff;
-    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(230,36,41,.8); }
+    background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
+    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(56,189,248,.55); }
 
 /* --- ခလုတ် --- */
 div[data-testid*="stBaseButton-primary"] > button, .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #F03A3A, #A50F14) !important;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1) !important;
     color: #fff !important; border: none !important; border-radius: 12px !important;
     font-weight: 800 !important; letter-spacing: .3px;
-    box-shadow: 0 4px 20px rgba(230,36,41,.5) !important;
+    box-shadow: 0 4px 20px rgba(56,189,248,.35) !important;
 }
 div[data-testid*="stBaseButton-primary"] > button:hover, .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 6px 28px rgba(230,36,41,.85) !important;
+    box-shadow: 0 6px 28px rgba(56,189,248,.6) !important;
     transform: translateY(-1px); color: #fff !important;
 }
 .stButton > button[kind="secondary"], div[data-testid*="stBaseButton-secondary"] > button {
-    border: 1px solid rgba(80,120,255,.55) !important; border-radius: 12px !important;
-    background: rgba(43,92,230,.10) !important; color: #C9D6FF !important; font-weight: 700 !important;
+    border: 1px solid rgba(125,211,252,.4) !important; border-radius: 12px !important;
+    background: rgba(56,189,248,.07) !important; color: #C4D7F5 !important; font-weight: 700 !important;
 }
 .stButton > button[kind="secondary"]:hover, div[data-testid*="stBaseButton-secondary"] > button:hover {
-    background: rgba(43,92,230,.22) !important; color: #fff !important;
-    box-shadow: 0 0 16px rgba(43,92,230,.45) !important; border-color: #7FA2FF !important;
+    background: rgba(56,189,248,.16) !important; color: #fff !important;
+    box-shadow: 0 0 16px rgba(56,189,248,.35) !important; border-color: #7DD3FC !important;
 }
 
 /* --- sidebar --- */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #160709 0%, #0A0A14 70%) !important;
-    border-right: 1px solid rgba(230,36,41,.32);
+    background: linear-gradient(180deg, #0D1220 0%, #0B0E17 70%) !important;
+    border-right: 1px solid rgba(56,189,248,.20);
 }
-section[data-testid="stSidebar"] h3 { border-left: 4px solid #E62429; padding-left: 10px !important; }
-section[data-testid="stSidebar"] h4 { color: #FF8A8D !important; }
+section[data-testid="stSidebar"] h3 { border-left: 4px solid #38BDF8; padding-left: 10px !important; }
+section[data-testid="stSidebar"] h4 { color: #7DD3FC !important; }
 
 /* --- တခြား --- */
-div[data-testid="stExpander"] { border: 1px solid rgba(230,36,41,.32); border-radius: 14px;
-    background: rgba(230,36,41,.05); }
-div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(230,36,41,.55); border-radius: 16px;
-    background: rgba(230,36,41,.05); padding: 10px; }
+div[data-testid="stExpander"] { border: 1px solid rgba(56,189,248,.22); border-radius: 14px;
+    background: rgba(56,189,248,.04); }
+div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(56,189,248,.45); border-radius: 16px;
+    background: rgba(56,189,248,.04); padding: 10px; }
 div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
-    border-color: #E62429 !important;
-    box-shadow: 0 0 0 1px #E62429, 0 0 14px rgba(230,36,41,.4) !important; }
-div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(230,36,41,.8); }
-.spidey-dl-label { font-weight: 800; color: #FFB4B6; margin: 6px 0 10px; font-size: 1rem; }
-.spidey-foot { text-align: center; color: #5A6080; font-size: .8rem; padding: 20px 0 8px; }
+    border-color: #38BDF8 !important;
+    box-shadow: 0 0 0 1px #38BDF8, 0 0 14px rgba(56,189,248,.35) !important; }
+div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(56,189,248,.6); }
+.spidey-dl-label { font-weight: 800; color: #BAE6FD; margin: 6px 0 10px; font-size: 1rem; }
+.spidey-foot { text-align: center; color: #5A6480; font-size: .8rem; padding: 20px 0 8px; }
 </style>"""
 
 
@@ -295,43 +290,24 @@ TTS_CONCURRENT = False
 _RELAY_URL = ""
 _RELAY_TOKEN = ""
 
-# ------------------------------------------------- 🔊 TTS engine (gemini / edge)
-# Edge TTS (Microsoft) က 2026-10 မှာ v1 endpoint ကို 403 နဲ့ block စလုပ်လို့
-# default က Gemini TTS (ရှိပြီးသား API key ပဲ သုံး). Edge ကို phone relay နဲ့
-# သုံးနေရင် sidebar က ပြန်ရွေးလို့ရ.
-_TTS_ENGINE = "gemini"
-_GEMINI_TTS_KEY = ""
-_GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
-_GEMINI_TTS_VOICE = "Kore"
-_GEMINI_TTS_VOICES = ["Kore", "Charon", "Puck", "Fenrir", "Aoede",
-                      "Leda", "Callirrhoe", "Autonoe", "Enceladus", "Iapetus"]
-
-
-def _sync_tts_globals(engine_label, gemini_key, gemini_voice):
-    """sidebar widget values → module globals (TTS မခေါ်ခင် run တိုင်း sync)."""
-    global _TTS_ENGINE, _GEMINI_TTS_KEY, _GEMINI_TTS_VOICE
-    _TTS_ENGINE = "edge" if str(engine_label).startswith("🌐") else "gemini"
-    _GEMINI_TTS_KEY = (gemini_key or "").strip()
-    _GEMINI_TTS_VOICE = gemini_voice or "Kore"
+# ------------------------------------------------- 🔊 TTS (Edge only)
+# Gemini TTS ကို ဖယ်လိုက်ပြီ (user request, 2026-10-20) — Edge TTS ပဲ.
+# edge-tts 7.3.1 က Sec-MS-GEC v2 token ထုတ်ပေးလို့ 403 ပြဿနာ မရှိတော့ဘူး.
 
 
 def _tts_voices(voice_primary, voice_fallback):
-    """engine အလိုက် စမ်းမယ့် voice list — gemini ဆို တစ်ခုတည်း."""
-    if _TTS_ENGINE == "gemini":
-        return (_GEMINI_TTS_VOICE,)
+    """စမ်းမယ့် voice list."""
     return (voice_primary, voice_fallback)
 
 
 def _tts_parallelism():
-    """engine အလိုက် parallel TTS အရေအတွက် — Edge က Microsoft throttle
-    ကြောင့် 3, Gemini က network-bound မို့ 5 (429 မိရင် retry+backoff ရှိတယ်)."""
-    return 5 if _TTS_ENGINE == "gemini" else 3
+    """parallel TTS အရေအတွက် — Microsoft throttle ကြောင့် 3."""
+    return 3
 
 
 def _tts_line_timeout():
-    """တစ်ကြောင်းစာ TTS timeout (စက္ကန့်) — Gemini စာရှည်ရင်
-    generate ကြာတတ်လို့ 120s, Edge က 45s."""
-    return 120 if _TTS_ENGINE == "gemini" else 45
+    """တစ်ကြောင်းစာ TTS timeout (စက္ကန့်)."""
+    return 45
 
 
 # ------------------------------------------------- 🎚️ voice speed
@@ -352,9 +328,9 @@ def _set_voice_speed(mult):
     _VOICE_RATE = f"{pct:+d}%"
 
 def _tts_use_concurrent():
-    """relay (phone IP, clean) / Gemini engine ဆို parallel TTS;
+    """relay (phone IP, clean) ဆို parallel TTS;
     Edge တိုက်ရိုက်ဆို TTS_CONCURRENT (False = တစ်ကြောင်းချင်း, throttle ကာကွယ်)."""
-    return TTS_CONCURRENT or bool(_RELAY_URL) or _TTS_ENGINE == "gemini"
+    return TTS_CONCURRENT or bool(_RELAY_URL)
 
 
 # ------------------------------------------------------------------ helpers
@@ -900,7 +876,7 @@ def merge_tiny_segments(segments, max_gap=0.5, min_slot=6.0, max_merged=12.0):
     """Whisper (verbose_json) က စက္ကန့်ပိုင်းအကွက်သေးသေးလေးတွေ ပေးတတ်တယ် —
     အဲ့ဒါတွေကို ကပ်နေတဲ့နောက်အပိုင်းတွေနဲ့ ~12s အထိ ပေါင်းလိုက်.
 
-    TTS request အရေအတွက် လျှော့ဖို့ (Gemini TTS က တစ်ခေါက်ကို overhead ရှိလို့
+    TTS request အရေအတွက် လျှော့ဖို့ (request တစ်ခုချင်းမှာ overhead ရှိလို့
     အပိုင်း 70 ကို 70 ခေါက် ခေါ်ရင် အရမ်းကြာတယ်).
 
     စည်း: အကွက်က min_slot ထက် သေးနေသေးရင် + နောက်အပိုင်းနဲ့ကြားက gap က
@@ -1372,108 +1348,17 @@ async def _edge_save(text, voice, path):
                 pass
 
 
-def _gemini_tts_save(api_key, model_id, voice_name, text, path):
-    """Gemini TTS → base64 PCM (24kHz) → mp3 (ffmpeg). _edge_save လို atomic write.
-
-    429/5xx → backoff နဲ့ ၃ ကြိမ်အထိ retry.
-    """
-    import base64
-    import requests
-    if not (api_key or "").strip():
-        raise RuntimeError("Gemini API key မရှိဘူး — sidebar မှာ ထည့်")
-    text = (text or "").strip()
-    if not text:
-        raise RuntimeError("empty text")
-    url = f"{GEMINI_BASE}{model_id}:generateContent"
-    body = {
-        "contents": [{"parts": [{"text": text}]}],
-        "generationConfig": {
-            "responseModalities": ["AUDIO"],
-            "speechConfig": {
-                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
-        },
-    }
-    headers = {"Content-Type": "application/json",
-               "x-goog-api-key": api_key.strip()}
-    last_err, r = None, None
-    for attempt in range(3):
-        try:
-            r = requests.post(url, headers=headers, json=body, timeout=120)
-        except Exception as e:
-            last_err = RuntimeError(f"Gemini TTS request failed: {e}")
-        else:
-            if r.status_code == 200:
-                break
-            if r.status_code in (429, 500, 502, 503):
-                last_err = RuntimeError(
-                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
-            else:
-                raise RuntimeError(
-                    f"Gemini TTS {r.status_code}: {r.text[:200]}")
-        if attempt < 2:
-            time.sleep(5.0 * (2 ** attempt))
-    else:
-        raise last_err
-    try:
-        part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
-        b64, mime = part["data"], part.get("mimeType", "")
-    except (KeyError, IndexError, TypeError):
-        raise RuntimeError(f"Gemini TTS response မမှန်ပါ: {r.text[:200]}")
-    m = re.search(r"rate=(\d+)", mime or "")
-    sr = int(m.group(1)) if m else 24000
-    raw = base64.b64decode(b64)
-    if len(raw) <= 1000:
-        raise RuntimeError("empty audio")
-    tmp, pcm = path + ".part", path + ".pcm"
-    try:
-        with open(pcm, "wb") as fh:
-            fh.write(raw)
-        # Gemini TTS → 16-bit mono PCM.
-        # NOTE: tmp ends with ".part" so output format MUST be explicit (-f mp3),
-        # otherwise ffmpeg fails with "Unable to find a suitable output format".
-        # 🎚️ speed != 1.0 ဆို atempo နဲ့ ချိန် (pitch မပြောင်း).
-        _ff = ["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
-               "-ac", "1", "-i", pcm]
-        if abs(_VOICE_SPEED - 1.0) > 1e-6:
-            _ff += ["-af", f"atempo={_VOICE_SPEED:.3f}"]
-        _ff += ["-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp]
-        try:
-            run(_ff)
-        except subprocess.CalledProcessError as e:
-            _ferr = (e.stderr or "").strip()[:300]
-            raise RuntimeError(
-                f"ffmpeg PCM→MP3 failed: {_ferr or e}")
-        if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
-            raise RuntimeError("empty audio")
-        os.replace(tmp, path)
-    finally:
-        for f in (tmp, pcm):
-            try:
-                os.remove(f)
-            except OSError:
-                pass
-
-
 async def _tts_line_save(text, voice, path):
-    """engine-aware TTS save — async contexts (_parallel_tts_fetch, tts_natural)."""
-    if _TTS_ENGINE == "gemini":
-        await asyncio.to_thread(_gemini_tts_save, _GEMINI_TTS_KEY,
-                                _GEMINI_TTS_MODEL, _GEMINI_TTS_VOICE, text, path)
-    else:
-        await _edge_save(text, voice, path)
+    """TTS save — async contexts (_parallel_tts_fetch, tts_natural)."""
+    await _edge_save(text, voice, path)
 
 
 def _tts_cache_path(text, voice_primary):
-    """TTS cache file path — key = engine + voice + speed + text."""
-    if _TTS_ENGINE == "gemini":
-        key = hashlib.sha1(
-            f"gtts:{_GEMINI_TTS_MODEL}:{_GEMINI_TTS_VOICE}:{_VOICE_SPEED}:{text}"
-            .encode("utf-8")).hexdigest()[:16]
-    else:
-        # edge3: — speed မတူရင် cache မရောစေဖို့ (edge2 key တွေနဲ့ မတူ)
-        key = hashlib.sha1(
-            f"edge3:{voice_primary}:{_VOICE_RATE}:{text}"
-            .encode("utf-8")).hexdigest()[:16]
+    """TTS cache file path — key = voice + speed(rate) + text."""
+    # edge3: — speed မတူရင် cache မရောစေဖို့ (edge2 key တွေနဲ့ မတူ)
+    key = hashlib.sha1(
+        f"edge3:{voice_primary}:{_VOICE_RATE}:{text}"
+        .encode("utf-8")).hexdigest()[:16]
     return os.path.join(CACHE_TTS, f"{key}.mp3")
 
 
@@ -1485,19 +1370,6 @@ def tts_segment(text, voice_primary=VOICE_MALE, voice_fallback=VOICE_FEMALE, err
     voice အမှန်နဲ့ cache key — fallback audio ကို primary key အောက် မှားမသိမ်းဘူး.
     err_out (list) ပေးရင် ပထမဆုံး error ရဲ့ type+msg ကို ထည့်ပေးမယ် (diagnostics).
     """
-    if _TTS_ENGINE == "gemini":
-        out = _tts_cache_path(text, _GEMINI_TTS_VOICE)
-        if _valid_audio(out):
-            return out
-        try:
-            _gemini_tts_save(_GEMINI_TTS_KEY, _GEMINI_TTS_MODEL,
-                             _GEMINI_TTS_VOICE, text, out)
-            if _valid_audio(out):
-                return out
-        except Exception as e:
-            if err_out is not None and not err_out:
-                err_out.append(f"{type(e).__name__}: {str(e)[:150]}")
-        return None
     for voice in (voice_primary, voice_fallback):
         out = _tts_cache_path(text, voice)
         if _valid_audio(out):
@@ -1544,8 +1416,7 @@ def fit_segment(src_mp3, slot, gap_after, max_speed, out_path):
 
 
 def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
-    """texts[i] → mp3 path / None. cache-hit တွေကျော်, ကျန်တာ engine အလိုက်
-ပြိုင်နက်ထုတ် (Edge 3 / Gemini 5) + voice တစ်ခုကို ၂ ကြိမ် retry/backoff.
+    """texts[i] → mp3 path / None. cache-hit တွေကျော်, ကျန်တာ ၃ ခု ပြိုင်နက်ထုတ် + voice တစ်ခုကို ၂ ကြိမ် retry/backoff.
 
     စာသားထပ်နေတာတွေ dedup (ဖိုင်တူကို ပြိုင်ရေးမိမှာစိုးလို့ တစ်ခါပဲထုတ်,
     ကျန်တာက alias ပြန်ယူ). ရလဒ်အစဉ်က လိုင်းနံပါတ်အတိုင်း ပြန်စီထားတယ်.
@@ -1571,7 +1442,7 @@ def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
             jobs.append((i, t))
 
     async def _run():
-        sem = asyncio.Semaphore(_tts_parallelism())  # engine အလိုက် (Edge 3 / Gemini 5)
+        sem = asyncio.Semaphore(_tts_parallelism())  # ၃ ခု ပြိုင်နက်
         out = {}
         done = [0]
         first_err = []
@@ -1584,7 +1455,7 @@ def _parallel_tts_fetch(texts, voice_primary, voice_fallback, tick=None):
                         return i, vp
                     for attempt in range(2):
                         try:
-                            # hang မနေစေဖို့ timeout (engine အလိုက်)
+                            # hang မနေစေဖို့ timeout
                             await asyncio.wait_for(_tts_line_save(text, v, vp),
                                                    timeout=_tts_line_timeout())
                             if _valid_audio(vp):
@@ -1918,7 +1789,7 @@ def _premade_from_zip(zip_file, segments, voice, outdir):
 def tts_and_fit(segments, voice, max_speed, work_segs, progress_cb=None, tts_fn=None, premade=None):
     """segments: [{'start','end','text'}] → fitted mp3 တွေ.
 
-    TTS: engine/relay အလိုက် parallel (Edge 3 / Gemini 5, retry+backoff ပါ) →
+    TTS: relay အလိုက် parallel (၃ ခု, retry+backoff ပါ) →
     ကျန်တဲ့ None တွေ တစ်ကြောင်းချင်း fallback.
     အပိုင်းသေး (1-2s) တွေကို TTS အတွက် ~12s ဆက်ပြီးမှ ထုတ်တယ် (request နည်း → မြန်).
     ပြီးမှ တကြောင်းချင်း duration တိုင်း + slot ထဲချိန် (sync logic လုံးဝမထိဘူး).
@@ -2055,7 +1926,7 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
 
     fit_segment လို slot ထဲ အတင်းမထည့်ဘူး — TTS သဘာဝအရှည်အတိုင်း.
     Recap render အတွက် narration အရှည်တိုင်းဖို့ သုံးတယ်.
-    Cache လွတ်တဲ့အပိုင်းတွေကို engine အလိုက် ပြိုင်နက်ထုတ်တယ် (Edge 3 / Gemini 5) +
+    Cache လွတ်တဲ့အပိုင်းတွေကို ၃ ခု ပြိုင်နက်ထုတ်တယ် +
     voice တစ်ခုကို ၂ ကြိမ် retry/backoff + ကျန်တာ တစ်ကြောင်းချင်း fallback.
     """
     os.makedirs(work_segs, exist_ok=True)
@@ -2092,7 +1963,7 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
             _tick(i)
 
     async def _fetch(jobs):
-        sem = asyncio.Semaphore(_tts_parallelism())  # engine အလိုက် (Edge 3 / Gemini 5)
+        sem = asyncio.Semaphore(_tts_parallelism())  # ၃ ခု ပြိုင်နက်
         first_err = []
 
         async def _one(i, text):
@@ -2103,7 +1974,7 @@ def tts_natural(segments, voice, work_segs, progress_cb=None):
                         return i, vp
                     for attempt in range(2):
                         try:
-                            # hang မနေစေဖို့ timeout (engine အလိုက်)
+                            # hang မနေစေဖို့ timeout
                             await asyncio.wait_for(_tts_line_save(text, v, vp),
                                                    timeout=_tts_line_timeout())
                             if _valid_audio(vp):
@@ -2901,7 +2772,7 @@ def update_story_memory(api_key, model_id, mem, translations):
 
 
 def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
-             use_fallback, glossary, auto_merge):
+             use_fallback, glossary, auto_merge, recap=True):
     """⚡ Auto mode: ဗီဒီယိုတင် → ခလုတ်တစ်ချက် → အပြီးအစီး."""
     import streamlit as st
     _spidey_card_open("⚡", "Auto — တစ်ချက်နှိပ်ပြီး အပြီးလုပ်")
@@ -2985,7 +2856,8 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
                     disabled=not (S.video_path and _has_keys))
     if _go:
         _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
-                  use_fallback, glossary, auto_merge, _lang_code, drama_name)
+                  use_fallback, glossary, auto_merge, _lang_code, drama_name,
+                  recap=recap)
     _spidey_card_close()
     # --- ရလဒ်
     if S.get("auto_done") and S.out_mp4 and os.path.isfile(S.out_mp4):
@@ -2993,7 +2865,8 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
 
 
 def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
-              use_fallback, glossary, auto_merge, lang_code, drama_name=""):
+              use_fallback, glossary, auto_merge, lang_code, drama_name="",
+              recap=True):
     """Auto pipeline အစအဆုံး (progress နဲ့). ပျက်ရင် ဘယ်အဆင့်လဲ ပြပြီး ရပ်.
 
     အဆင့်တိုင်း checkpoint သိမ်း → ခလုတ်ပြန်နှိပ်ရင် ပြီးသားအဆင့်တွေ ကျော်ပြီး
@@ -3099,59 +2972,105 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
         S.auto_report = qc
         _reset_review_keys(S)
 
-        # ---- 4/6 TTS (သဘာဝအရှည် — render က video ချိန်ပေးမယ်) ----
-        s4 = _ckpt_load(rid, "s4_tts")
-        work_nat = os.path.join(WORK_DIR, rid, "natural")
-        natural = None
-        if _ckpt_matches(s4, {"n": len(S.final_segments), "voice": voice,
-                              "speed": _VOICE_SPEED}):
-            cand = s4.get("natural") or []
-            if cand and all(os.path.isfile((x or {}).get("mp3", ""))
-                           for x in cand):
-                natural = cand
-                setp(0.56,
-                     f"⏭️ 4/6 — အသံထုတ်ပြီးသား ({len(natural)} ပိုင်း) ကျော်မယ်")
-        if natural is None:
-            setp(0.54, "🔊 4/6 — မြန်မာအသံထုတ်နေတယ်...")
-            natural, failed_n, _nerr = tts_natural(
-                S.final_segments, voice, work_nat,
-                progress_cb=lambda f, i, t: setp(
-                    0.54 + 0.20 * f,
-                    f"🔊 4/6 — အပိုင်း {i + 1}/{len(S.final_segments)}"))
-            if not natural:
-                raise ValueError("အသံထုတ်မရဘူး — network / VPN စစ်ပါ" +
-                                 (f" [{_nerr}]" if _nerr else ""))
-            if failed_n:
-                msg.text(f"🔇 အသံထုတ်မရတဲ့အပိုင်း {len(failed_n)} ခု ကျော်သွားမယ်")
-            _ckpt_save(rid, "s4_tts",
-                       {"natural": natural, "failed": failed_n,
-                        "n": len(S.final_segments), "voice": voice})
-
-        # ---- 5-6/6 recap render + speedup ----
-        s5 = _ckpt_load(rid, "s5_final")
-        if (s5 and os.path.isfile(s5.get("out_mp4", ""))
-                and os.path.isfile(s5.get("amp3", ""))):
-            out, amp3, subs = s5["out_mp4"], s5["amp3"], s5["subs"]
-            setp(0.96, "⏭️ 5-6/6 — video ပြီးသား ကျော်မယ်")
+        # ---- 4/6 TTS (mode အလိုက်: recap = သဘာဝအရှည် / dub = slot ထဲ fit) ----
+        natural, fitted_dub = None, None
+        if not recap:
+            s4d = _ckpt_load(rid, "s4_tts_dub")
+            if _ckpt_matches(s4d, {"n": len(S.final_segments), "voice": voice,
+                                   "speed": _VOICE_SPEED}):
+                cand = s4d.get("fitted") or []
+                if cand and all(os.path.isfile(x[1]) for x in cand):
+                    fitted_dub = [tuple(x) for x in cand]
+                    setp(0.56, f"⏭️ 4/6 — အသံထုတ်ပြီးသား "
+                               f"({len(fitted_dub)} ပိုင်း) ကျော်မယ်")
+            if fitted_dub is None:
+                setp(0.54, "🔊 4/6 — မြန်မာအသံထုတ်နေတယ်...")
+                fitted_dub, _frep = tts_and_fit(
+                    S.final_segments, voice, 1.3,
+                    os.path.join(WORK_DIR, rid, "fit"),
+                    progress_cb=lambda f, i, t: setp(
+                        0.54 + 0.20 * f,
+                        f"🔊 4/6 — အပိုင်း {i + 1}/{len(S.final_segments)}"))
+                if not fitted_dub:
+                    raise ValueError(
+                        "အသံထုတ်မရဘူး — network / VPN စစ်ပါ" +
+                        (f" [{_frep.get('tts_err')}]"
+                         if _frep.get("tts_err") else ""))
+                _ckpt_save(rid, "s4_tts_dub",
+                           {"fitted": fitted_dub,
+                            "n": len(S.final_segments), "voice": voice,
+                            "speed": _VOICE_SPEED})
         else:
-            setp(0.76, "🎞️ 5/6 — video ကို narration အရှည်နဲ့ကိုက်အောင် ချိန်နေတယ်...")
-            work_rc = os.path.join(WORK_DIR, rid, "recap")
-            tmp_out = os.path.join(work_rc, "recap_video.mp4")
-            _, timeline, _ = render_recap_video(
-                S.video_path, natural, S.duration, work_rc, tmp_out)
-            setp(0.94, f"⚡ 6/6 — {_AUTO_SPEEDUP}x တင်ပြီး အပြီးသတ်နေတယ်...")
-            out = os.path.join(WORK_DIR, rid, "dubbed_video.mp4")
-            sped = os.path.join(WORK_DIR, rid, "spedup.mp4")
-            speedup_video(tmp_out, _AUTO_SPEEDUP, sped)
-            shutil.copyfile(sped, out)
-            subs = [{"start": x["start"] / _AUTO_SPEEDUP,
-                     "end": x["end"] / _AUTO_SPEEDUP,
-                     "text": x["text"]} for x in timeline]
-            amp3 = os.path.join(WORK_DIR, rid, "dubbed_voiceover.mp3")
-            run(["ffmpeg", "-y", "-v", "error", "-i", out, "-vn",
-                 "-c:a", "libmp3lame", "-b:a", "128k", amp3])
-            _ckpt_save(rid, "s5_final",
-                       {"out_mp4": out, "amp3": amp3, "subs": subs})
+            s4 = _ckpt_load(rid, "s4_tts")
+            work_nat = os.path.join(WORK_DIR, rid, "natural")
+            if _ckpt_matches(s4, {"n": len(S.final_segments), "voice": voice,
+                                  "speed": _VOICE_SPEED}):
+                cand = s4.get("natural") or []
+                if cand and all(os.path.isfile((x or {}).get("mp3", ""))
+                               for x in cand):
+                    natural = cand
+                    setp(0.56,
+                         f"⏭️ 4/6 — အသံထုတ်ပြီးသား ({len(natural)} ပိုင်း) ကျော်မယ်")
+            if natural is None:
+                setp(0.54, "🔊 4/6 — မြန်မာအသံထုတ်နေတယ်...")
+                natural, failed_n, _nerr = tts_natural(
+                    S.final_segments, voice, work_nat,
+                    progress_cb=lambda f, i, t: setp(
+                        0.54 + 0.20 * f,
+                        f"🔊 4/6 — အပိုင်း {i + 1}/{len(S.final_segments)}"))
+                if not natural:
+                    raise ValueError("အသံထုတ်မရဘူး — network / VPN စစ်ပါ" +
+                                     (f" [{_nerr}]" if _nerr else ""))
+                if failed_n:
+                    msg.text(f"🔇 အသံထုတ်မရတဲ့အပိုင်း {len(failed_n)} ခု ကျော်သွားမယ်")
+                _ckpt_save(rid, "s4_tts",
+                           {"natural": natural, "failed": failed_n,
+                            "n": len(S.final_segments), "voice": voice})
+
+        # ---- 5-6/6 (mode အလိုက်: recap render / dub assemble+mux) ----
+        if recap:
+            s5 = _ckpt_load(rid, "s5_final")
+            if (s5 and os.path.isfile(s5.get("out_mp4", ""))
+                    and os.path.isfile(s5.get("amp3", ""))):
+                out, amp3, subs = s5["out_mp4"], s5["amp3"], s5["subs"]
+                setp(0.96, "⏭️ 5-6/6 — video ပြီးသား ကျော်မယ်")
+            else:
+                setp(0.76, "🎞️ 5/6 — video ကို narration အရှည်နဲ့ကိုက်အောင် ချိန်နေတယ်...")
+                work_rc = os.path.join(WORK_DIR, rid, "recap")
+                tmp_out = os.path.join(work_rc, "recap_video.mp4")
+                _, timeline, _ = render_recap_video(
+                    S.video_path, natural, S.duration, work_rc, tmp_out)
+                setp(0.94, f"⚡ 6/6 — {_AUTO_SPEEDUP}x တင်ပြီး အပြီးသတ်နေတယ်...")
+                out = os.path.join(WORK_DIR, rid, "dubbed_video.mp4")
+                sped = os.path.join(WORK_DIR, rid, "spedup.mp4")
+                speedup_video(tmp_out, _AUTO_SPEEDUP, sped)
+                shutil.copyfile(sped, out)
+                subs = [{"start": x["start"] / _AUTO_SPEEDUP,
+                         "end": x["end"] / _AUTO_SPEEDUP,
+                         "text": x["text"]} for x in timeline]
+                amp3 = os.path.join(WORK_DIR, rid, "dubbed_voiceover.mp3")
+                run(["ffmpeg", "-y", "-v", "error", "-i", out, "-vn",
+                     "-c:a", "libmp3lame", "-b:a", "128k", amp3])
+                _ckpt_save(rid, "s5_final",
+                           {"out_mp4": out, "amp3": amp3, "subs": subs})
+        else:
+            s5d = _ckpt_load(rid, "s5_final_dub")
+            if (s5d and os.path.isfile(s5d.get("out_mp4", ""))
+                    and os.path.isfile(s5d.get("amp3", ""))):
+                out, amp3, subs = s5d["out_mp4"], s5d["amp3"], s5d["subs"]
+                setp(0.96, "⏭️ 5-6/6 — video ပြီးသား ကျော်မယ်")
+            else:
+                setp(0.76, "🎬 5/6 — အသံဆက်နေတယ်...")
+                work_asm = os.path.join(WORK_DIR, rid, "asm")
+                dubbed = os.path.join(WORK_DIR, rid, "dubbed_audio.mp3")
+                assemble_dubbed(fitted_dub, S.duration, work_asm, dubbed)
+                setp(0.9, "🎬 6/6 — ဗီဒီယိုနဲ့ပေါင်းနေတယ်...")
+                out = os.path.join(WORK_DIR, rid, "dubbed_video.mp4")
+                mux_video(S.video_path, dubbed, out)
+                subs = [dict(s) for s in S.final_segments]
+                amp3 = dubbed
+                _ckpt_save(rid, "s5_final_dub",
+                           {"out_mp4": out, "amp3": amp3, "subs": subs})
         S.out_mp4, S.out_subs, S.auto_mp3 = out, subs, amp3
         S.auto_done = True
         setp(1.0, "✅ ပြီးပြီ!")
@@ -3225,8 +3144,8 @@ def _init_state(st):
         "recap_timeline": None, "recap_report": None,
         "out_subs": None,
         "wizard_step": 1,
-        # 🔊 TTS engine + Gemini voice
-        "tts_engine": "🤖 Gemini", "gemini_tts_voice": "Kore",
+        # 🎛️ app mode (Dubbing / Recap / Recap+Dub)
+        "app_mode": "🎬+🎙️ Recap + Dub Mode",
         # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
         "voice_speed": 1.0,
     }
@@ -3339,28 +3258,16 @@ def main():
         model_id = st.text_input("Gemini model", value=GEMINI_MODEL_DEFAULT)
         # 🎚️ အသံချုံ့ slider ဝှက်ထားတယ် — render mode မှာ အလုပ်မလုပ်လို့; 1.3x အသေ
         max_speed = 1.3
-        # 🔊 TTS engine — Edge (Microsoft) က 403 block မိနေလို့ Gemini default
-        tts_engine = st.radio("🔊 TTS engine", ["🤖 Gemini", "🌐 Edge TTS"],
-                              key="tts_engine",
-                              help="Edge TTS က Microsoft block မိနေတယ် (403) — "
-                                   "Gemini ကို အကြံပြုတယ်. Edge ကို phone relay နဲ့ "
-                                   "သုံးနေရင် Edge ရွေးထားလို့ရတယ်.")
-        if tts_engine.startswith("🤖"):
-            voice = st.selectbox("Gemini အသံ", _GEMINI_TTS_VOICES,
-                                 key="gemini_tts_voice",
-                                 help="Burmese narration အသံ — ကြိုက်တာ ရွေး, "
-                                      "အောက်က စမ်းနားထောင်ခလုတ်နဲ့ စစ်လို့ရတယ်")
-        else:
-            voice = st.selectbox("အသံ", [v for v, _l in EDGE_VOICES],
-                                 format_func=lambda v: _EDGE_VOICE_LABELS.get(v, v),
-                                 help="🌍 Multilingual အသံတွေက မြန်မာစာသားကိုပါ "
-                                      "ဖတ်နိုင်တယ် (ဘာသာစကား auto-detect)")
+        # 🔊 TTS — Edge TTS only (Gemini TTS ဖယ်ပြီး, 2026-10-20)
+        voice = st.selectbox("အသံ", [v for v, _l in EDGE_VOICES],
+                             format_func=lambda v: _EDGE_VOICE_LABELS.get(v, v),
+                             help="🌍 Multilingual အသံတွေက မြန်မာစာသားကိုပါ "
+                                  "ဖတ်နိုင်တယ် (ဘာသာစကား auto-detect)")
         voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
                                 key="voice_speed",
                                 help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်, "
                                      "1.3 = 30% မြန်. ဖုန်း relay လမ်းမှာတော့ မသက်ရောက်ဘူး.")
         _set_voice_speed(voice_speed)
-        _sync_tts_globals(tts_engine, api_key, S.get("gemini_tts_voice", "Kore"))
         if st.button("🔊 အသံ စမ်းနားထောင်ရန်", use_container_width=True,
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
                           "အဆင့် ၅ မလုပ်ခင် အသံကြိုက်မကြိုက် စစ်လို့ရတယ်"):
@@ -3378,21 +3285,39 @@ def main():
         st.divider()
         st.markdown("#### ⚙️ ရွေးချယ်စရာ")
         # 🔗/✂️ UI ဝှက်ထားတယ် (code ကျန်တယ်) — အပိုင်းသေးပေါင်းတာ အမြဲဖွင့်
-        # (Gemini TTS မြန်ဖို့ request အရေအတွက် လျှော့ဖို့လို)
+        # (TTS မြန်ဖို့ request အရေအတွက် လျှော့ဖို့လို)
         auto_merge = True
         auto_shorten = False
         # 🔄 fallback checkbox ဖြုတ်လိုက်တယ် — Groq ပျက်ရင် အမြဲ AssemblyAI နဲ့ဆက်မယ်
         use_fallback = True
+        st.markdown("##### 🎛️ Mode")
+        app_mode = st.radio(
+            "Mode", ["🎙️ Dubbing Mode", "🎬 Recap Mode",
+                     "🎬+🎙️ Recap + Dub Mode"],
+            key="app_mode", label_visibility="collapsed",
+            help="🎙️ Dubbing = အသံကို မူရင်းအချိန်ကွက်ထဲ ထည့် (video မပြောင်း). "
+                 "🎬 Recap = အသံ သဘာဝအတိုင်းထား, video ကို အသံနဲ့ကိုက်အောင် ချိန်. "
+                 "🎬+🎙️ = နှစ်မျိုးလုံး — အောက်က Recap render checkbox နဲ့ ရွေး.")
+        _mode_dub_only = (app_mode == "🎙️ Dubbing Mode")
+        _mode_recap_only = (app_mode == "🎬 Recap Mode")
         st.markdown("##### 🎬 Recap Studio")
         # 🎬 recap-style UI ဝှက်ထားတယ် (code ကျန်တယ်) — အခု စာကြောင်းချင်းပြန်ပဲ
         recap_style = False
-        recap_render = st.checkbox(
-            "🎞️ Recap render — video ကို narration အရှည်နဲ့ကိုက်အောင် ချိန်",
-            value=True,
-            help="အသံကို အချိန်ကွက်ထဲ အတင်းမထည့်ဘဲ သဘာဝအတိုင်းထားပြီး၊ "
-                 "video အပိုင်းတစ်ခုချင်းစီကို သူ့ narration အရှည်နဲ့ကိုက်အောင် "
-                 "အမြန်/အနှေးချိန်မယ် (slow-mo / fast-mo)။ ဗီဒီယိုမုဒ်မှာသာ "
-                 "အလုပ်လုပ်တယ်။ ပိတ်ထားရင် အရင်အတိုင်း")
+        if _mode_dub_only:
+            recap_render = False
+            st.caption("🎙️ Dubbing Mode — Recap render ပိတ်ထားတယ် "
+                       "(အသံကို အချိန်ကွက်ထဲ fit လုပ်မယ်)")
+        elif _mode_recap_only:
+            recap_render = True
+            st.caption("🎬 Recap Mode — Recap render အမြဲဖွင့်ထားတယ်")
+        else:
+            recap_render = st.checkbox(
+                "🎞️ Recap render — video ကို narration အရှည်နဲ့ကိုက်အောင် ချိန်",
+                value=True,
+                help="အသံကို အချိန်ကွက်ထဲ အတင်းမထည့်ဘဲ သဘာဝအတိုင်းထားပြီး၊ "
+                     "video အပိုင်းတစ်ခုချင်းစီကို သူ့ narration အရှည်နဲ့ကိုက်အောင် "
+                     "အမြန်/အနှေးချိန်မယ် (slow-mo / fast-mo)။ ဗီဒီယိုမုဒ်မှာသာ "
+                     "အလုပ်လုပ်တယ်။ ပိတ်ထားရင် အရင်အတိုင်း")
         speedup = st.slider("⚡ Render ပြီးရင် speed တင်", 1.0, 1.5, 1.0, 0.05,
                             help="Download မချခင် video ကို အမြန်ပေးမယ် "
                                  "(video+audio အတူ, sync မပျက်) — 1.0 = မူရင်းအတိုင်း, "
@@ -3422,9 +3347,9 @@ def main():
     # ---------------------------------------------------------- main
     st.markdown(
         '<div class="spidey-hero">'
-        '<div class="spidey-kicker">🕸️ FRIENDLY NEIGHBORHOOD DUBBING 🕸️</div>'
+        '<div class="spidey-kicker">🎙️ AI DUBBING STUDIO</div>'
         '<div class="spidey-title">Audio Dub Studio</div>'
-        '<div class="spidey-sub">ဗီဒီယို / SRT → မြန်မာအသံ — မူရင်းအချိန်အတိုင်း 🕷️</div>'
+        '<div class="spidey-sub">ဗီဒီယို / SRT → မြန်မာအသံ — မူရင်းအချိန်အတိုင်း</div>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -3432,10 +3357,11 @@ def main():
     # ⚡ Auto mode: ဗီဒီယိုတင် → တစ်ချက်နှိပ် အပြီးအစီး (manual wizard ကို ကျော်)
     if str(S.get("app_mode", "🔧 Manual (တစ်ဆင့်ချင်း)")).startswith("⚡"):
         _auto_ui(S, api_key, groq_key, assembly_key,
-                 model_id, voice, use_fallback, glossary, auto_merge)
+                 model_id, voice, use_fallback, glossary, auto_merge,
+                 recap=recap_render)
         st.markdown(
-            '<div class="spidey-foot">🕷️ Audio Dub Studio — '
-            "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.2</span></div>",
+            '<div class="spidey-foot">🎙️ Audio Dub Studio — '
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.3</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4353,8 +4279,8 @@ def main():
             S["wizard_step"] = _cur + 1
             st.rerun()
     st.markdown(
-        '<div class="spidey-foot">🕷️ Audio Dub Studio — '
-        "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.2</span></div>",
+        '<div class="spidey-foot">🎙️ Audio Dub Studio — '
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.3</span></div>",
         unsafe_allow_html=True)
 
 

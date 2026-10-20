@@ -1,7 +1,8 @@
 # 🎙️ Audio Dub Studio
 
-> 🔀 **Fork note (pannthee)**: မူရင်း upstream အတိုင်း + **Gemini TTS** engine
-> (Edge TTS 403 block ကြောင့်; sidebar → 🔊 TTS engine က ရွေး, default 🤖 Gemini).
+> 🔀 **Fork note (pannthee)**: မူရင်း upstream + ပြင်ဆင်ချက်များ —
+> Edge TTS only (edge-tts 7.3.1), 🎚️ voice speed, 🌍 Multilingual အသံတွေ,
+> 🎛️ Mode ရွေး (Dubbing / Recap / Recap+Dub), midnight UI design,
 > အပိုင်းသေးတွေ auto-merge (~12s) ဖွင့်ထားလို့ TTS မြန်တယ်.
 > Create by Bo Bo Myint Mo.
 
@@ -18,8 +19,8 @@
    sidebar မှာ AssemblyAI key ထည့်၊ toggle ဖွင့်ထား)
 3. Gemini (`gemini-3.5-flash-lite`) နဲ့ သဘာဝကျတဲ့ ပြောစကားမြန်မာလို ဘာသာပြန်
 4. စာသားကို ပြန်စစ် / ပြင် (တစ်ကြောင်းချင်း)
-5. **TTS** နဲ့ အသံထုတ် — 🤖 Gemini TTS (default) သို့မဟုတ် 🌐 Edge TTS
-   (`my-MM-ThihaNeural` ကျားအသံ) — တစ်ကြောင်းချင်းကို သူ့အချိန်ကွက်ထဲ အတိအကျထည့်
+5. **TTS** နဲ့ အသံထုတ် — 🌐 Edge TTS (`my-MM-ThihaNeural` ကျားအသံ + Nilar +
+   🌍 Multilingual အသံတွေ, 🎚️ speed ချိန်လို့ရ) — တစ်ကြောင်းချင်းကို သူ့အချိန်ကွက်ထဲ အတိအကျထည့်
    (ရှည်ရင် 1.3x အထိ မြန်ပေး၊ နောက်အပိုင်းနဲ့ မထပ်စေဘူး၊ ရှည်လွန်းတဲ့လိုင်းတွေ report ထုတ်)
 6. မူရင်းဗီဒီယိုနဲ့ ပေါင်း → **Dubbed MP4** + **SRT** download
 
