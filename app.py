@@ -266,6 +266,25 @@ GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite"   # Script-writer / sub-translato
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
 VOICE_MALE = "my-MM-ThihaNeural"
 VOICE_FEMALE = "my-MM-NilarNeural"
+
+# 🌍 Multilingual အသံတွေ (Edge) — မြန်မာစာသားကိုပါ ဖတ်နိုင်တယ် (auto language detect)
+EDGE_VOICES = [
+    (VOICE_MALE, "🗣️ ကျား (Thiha) — မြန်မာ"),
+    (VOICE_FEMALE, "🗣️ မ (Nilar) — မြန်မာ"),
+    ("en-US-AvaMultilingualNeural", "🌍 Ava (Multilingual)"),
+    ("en-US-AndrewMultilingualNeural", "🌍 Andrew (Multilingual)"),
+    ("en-US-EmmaMultilingualNeural", "🌍 Emma (Multilingual)"),
+    ("en-US-BrianMultilingualNeural", "🌍 Brian (Multilingual)"),
+    ("en-AU-WilliamMultilingualNeural", "🌍 William (Multilingual)"),
+    ("de-DE-FlorianMultilingualNeural", "🌍 Florian (Multilingual)"),
+    ("de-DE-SeraphinaMultilingualNeural", "🌍 Seraphina (Multilingual)"),
+    ("fr-FR-RemyMultilingualNeural", "🌍 Remy (Multilingual)"),
+    ("fr-FR-VivienneMultilingualNeural", "🌍 Vivienne (Multilingual)"),
+    ("it-IT-GiuseppeMultilingualNeural", "🌍 Giuseppe (Multilingual)"),
+    ("ko-KR-HyunsuMultilingualNeural", "🌍 Hyunsu (Multilingual)"),
+    ("pt-BR-ThalitaMultilingualNeural", "🌍 Thalita (Multilingual)"),
+]
+_EDGE_VOICE_LABELS = dict(EDGE_VOICES)
 # TTS concurrency switch — 2026-10-12: 6-parallel (နောက် 3-parallel) သုံးပြီးတဲ့နောက်
 # Microsoft က throttle/block လုပ်သွားပုံရတယ် → TTS လုံးဝပျက်သွားတယ်.
 # သက်သေပြ sequential (False) ကို ပြန်ထားတယ်. True ပြန်လုပ်မယ်ဆိုရင်
@@ -313,6 +332,24 @@ def _tts_line_timeout():
     """တစ်ကြောင်းစာ TTS timeout (စက္ကန့်) — Gemini စာရှည်ရင်
     generate ကြာတတ်လို့ 120s, Edge က 45s."""
     return 120 if _TTS_ENGINE == "gemini" else 45
+
+
+# ------------------------------------------------- 🎚️ voice speed
+_VOICE_SPEED = 1.0     # 0.7–1.3 multiplier
+_VOICE_RATE = "+0%"    # edge-tts rate string
+
+
+def _set_voice_speed(mult):
+    """mult: 0.7–1.3 float → global speed + edge-tts rate string (+/-N%)."""
+    global _VOICE_SPEED, _VOICE_RATE
+    try:
+        mult = float(mult)
+    except (TypeError, ValueError):
+        mult = 1.0
+    _VOICE_SPEED = max(0.5, min(2.0, mult))
+    pct = round((_VOICE_SPEED - 1.0) * 100)
+    pct = max(-50, min(50, pct))
+    _VOICE_RATE = f"{pct:+d}%"
 
 def _tts_use_concurrent():
     """relay (phone IP, clean) / Gemini engine ဆို parallel TTS;
@@ -1323,7 +1360,7 @@ async def _edge_save(text, voice, path):
     import edge_tts
     tmp = path + ".part"
     try:
-        await edge_tts.Communicate(text, voice).save(tmp)
+        await edge_tts.Communicate(text, voice, rate=_VOICE_RATE).save(tmp)
         if not os.path.isfile(tmp) or os.path.getsize(tmp) <= 1000:
             raise RuntimeError("empty audio")
         os.replace(tmp, path)
@@ -1394,10 +1431,14 @@ def _gemini_tts_save(api_key, model_id, voice_name, text, path):
         # Gemini TTS → 16-bit mono PCM.
         # NOTE: tmp ends with ".part" so output format MUST be explicit (-f mp3),
         # otherwise ffmpeg fails with "Unable to find a suitable output format".
+        # 🎚️ speed != 1.0 ဆို atempo နဲ့ ချိန် (pitch မပြောင်း).
+        _ff = ["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
+               "-ac", "1", "-i", pcm]
+        if abs(_VOICE_SPEED - 1.0) > 1e-6:
+            _ff += ["-af", f"atempo={_VOICE_SPEED:.3f}"]
+        _ff += ["-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp]
         try:
-            run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(sr),
-                 "-ac", "1", "-i", pcm,
-                 "-c:a", "libmp3lame", "-b:a", "128k", "-f", "mp3", tmp])
+            run(_ff)
         except subprocess.CalledProcessError as e:
             _ferr = (e.stderr or "").strip()[:300]
             raise RuntimeError(
@@ -1423,15 +1464,16 @@ async def _tts_line_save(text, voice, path):
 
 
 def _tts_cache_path(text, voice_primary):
-    """TTS cache file path — key = engine + voice + text."""
+    """TTS cache file path — key = engine + voice + speed + text."""
     if _TTS_ENGINE == "gemini":
         key = hashlib.sha1(
-            f"gtts:{_GEMINI_TTS_MODEL}:{_GEMINI_TTS_VOICE}:{text}"
+            f"gtts:{_GEMINI_TTS_MODEL}:{_GEMINI_TTS_VOICE}:{_VOICE_SPEED}:{text}"
             .encode("utf-8")).hexdigest()[:16]
     else:
-        # edge2: — အရင် key နဲ့ သိမ်းထားတဲ့ တစ်ဝက်ဖိုင်တွေ (poisoned cache) ကျော်ဖို့
+        # edge3: — speed မတူရင် cache မရောစေဖို့ (edge2 key တွေနဲ့ မတူ)
         key = hashlib.sha1(
-            f"edge2:{voice_primary}:{text}".encode("utf-8")).hexdigest()[:16]
+            f"edge3:{voice_primary}:{_VOICE_RATE}:{text}"
+            .encode("utf-8")).hexdigest()[:16]
     return os.path.join(CACHE_TTS, f"{key}.mp3")
 
 
@@ -3061,7 +3103,8 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
         s4 = _ckpt_load(rid, "s4_tts")
         work_nat = os.path.join(WORK_DIR, rid, "natural")
         natural = None
-        if _ckpt_matches(s4, {"n": len(S.final_segments), "voice": voice}):
+        if _ckpt_matches(s4, {"n": len(S.final_segments), "voice": voice,
+                              "speed": _VOICE_SPEED}):
             cand = s4.get("natural") or []
             if cand and all(os.path.isfile((x or {}).get("mp3", ""))
                            for x in cand):
@@ -3184,6 +3227,8 @@ def _init_state(st):
         "wizard_step": 1,
         # 🔊 TTS engine + Gemini voice
         "tts_engine": "🤖 Gemini", "gemini_tts_voice": "Kore",
+        # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
+        "voice_speed": 1.0,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3306,8 +3351,15 @@ def main():
                                  help="Burmese narration အသံ — ကြိုက်တာ ရွေး, "
                                       "အောက်က စမ်းနားထောင်ခလုတ်နဲ့ စစ်လို့ရတယ်")
         else:
-            voice = st.selectbox("အသံ", [VOICE_MALE, VOICE_FEMALE],
-                                 format_func=lambda v: "🗣️ ကျား (Thiha)" if v == VOICE_MALE else "🗣️ မ (Nilar)")
+            voice = st.selectbox("အသံ", [v for v, _l in EDGE_VOICES],
+                                 format_func=lambda v: _EDGE_VOICE_LABELS.get(v, v),
+                                 help="🌍 Multilingual အသံတွေက မြန်မာစာသားကိုပါ "
+                                      "ဖတ်နိုင်တယ် (ဘာသာစကား auto-detect)")
+        voice_speed = st.slider("🎚️ အသံအမြန်နှုန်း", 0.7, 1.3, step=0.05,
+                                key="voice_speed",
+                                help="အသံပြောတဲ့အမြန်နှုန်း — 1.0 = ပုံမှန်, "
+                                     "1.3 = 30% မြန်. ဖုန်း relay လမ်းမှာတော့ မသက်ရောက်ဘူး.")
+        _set_voice_speed(voice_speed)
         _sync_tts_globals(tts_engine, api_key, S.get("gemini_tts_voice", "Kore"))
         if st.button("🔊 အသံ စမ်းနားထောင်ရန်", use_container_width=True,
                      help="ရွေးထားတဲ့အသံနဲ့ နမူနာစာတစ်ကြောင်း ဖတ်ပြမယ် — "
@@ -3383,7 +3435,7 @@ def main():
                  model_id, voice, use_fallback, glossary, auto_merge)
         st.markdown(
             '<div class="spidey-foot">🕷️ Audio Dub Studio — '
-            "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.1-gemini</span></div>",
+            "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.2</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4302,7 +4354,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🕷️ Audio Dub Studio — '
-        "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.1-gemini</span></div>",
+        "your friendly neighborhood dubbing tool 🕸️<br>Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.2</span></div>",
         unsafe_allow_html=True)
 
 
