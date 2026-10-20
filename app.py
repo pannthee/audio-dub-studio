@@ -2028,6 +2028,187 @@ def mux_video(video_path, dubbed_mp3, out_mp4):
     return out_mp4
 
 
+# ------------------------------------------------- 🎨 Video style (step 6 panel)
+# render မလုပ်ခင်: 🪞 mirror / 🌫️ blur (မူရင်း subtitle နေရာဖုံး) /
+# 💬 subtitle burn-in (size/color/bg/opacity/position) / 🖼️ logo overlay.
+# settings ကို session state vs_* keys တွေမှာ သိမ်း; render က _stage ပေါ်
+# speedup မတိုင်ခင် တစ်ကြိမ် apply လုပ် (recap/dub နှစ်မျိုးလုံး တူတူရ).
+
+def _video_dims(path):
+    """(width, height) — ffprobe. မရရင် (1280, 720)."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=width,height", "-of", "csv=p=0", path],
+            capture_output=True, text=True, timeout=15)
+        w, h = r.stdout.strip().split(",")
+        return int(w), int(h)
+    except Exception:
+        return 1280, 720
+
+
+def _current_video_style(S):
+    """session state က style settings dict."""
+    bgop = S.get("vs_sub_bgop")
+    return {
+        "mirror": bool(S.get("vs_mirror")),
+        "blur": int(S.get("vs_blur") or 0),
+        "sub_on": bool(S.get("vs_sub_on", True)),
+        "sub_size": float(S.get("vs_sub_size") or 4.5),
+        "sub_color": S.get("vs_sub_color") or "#FFFFFF",
+        "sub_bg": bool(S.get("vs_sub_bg", True)),
+        "sub_bgcolor": S.get("vs_sub_bgcolor") or "#000000",
+        "sub_bgop": 60 if bgop is None else int(bgop),
+        "sub_pos": S.get("vs_sub_pos") or "⬇️ အောက်",
+        "logo_path": S.get("vs_logo_path") or "",
+        "logo_pos": S.get("vs_logo_pos") or "↗️ ညာအပေါ်",
+        "logo_size": int(S.get("vs_logo_size") or 12),
+    }
+
+
+def _style_active(sty):
+    """တစ်ခုခုဖွင့်ထားရင် re-encode လိုတယ် (မဟုတ်ရင် မူရင်း fast path)."""
+    return bool(sty["mirror"] or sty["blur"] > 0 or sty["sub_on"]
+                or (sty["logo_path"] and os.path.isfile(sty["logo_path"])))
+
+
+def _ass_color(hex_color, opacity_pct=100):
+    """"#RRGGBB" + opacity% → ASS &HAABBGGRR (alpha 00=opaque, FF=transparent)."""
+    c = (hex_color or "#FFFFFF").lstrip("#")
+    if len(c) != 6:
+        c = "FFFFFF"
+    r, g, b = c[0:2].upper(), c[2:4].upper(), c[4:6].upper()
+    a = 255 - int(round(255 * max(0, min(100, opacity_pct)) / 100.0))
+    return f"&H{a:02X}{b}{g}{r}"
+
+
+def _ass_time(sec):
+    sec = max(0.0, float(sec))
+    h = int(sec // 3600)
+    m = int((sec % 3600) // 60)
+    s = sec % 60
+    return f"{h}:{m:02d}:{s:05.2f}"
+
+
+def _write_ass(segments, sty, path, dims):
+    """segments → ASS ဖိုင် (Padauk font, style settings အတိုင်း)."""
+    W, H = dims
+    fs = max(10, int(H * float(sty["sub_size"]) / 100.0))
+    align = {"⬇️ အောက်": 2, "⏺ အလယ်": 5, "⬆️ အပေါ်": 8}.get(sty["sub_pos"], 2)
+    border = 3 if sty["sub_bg"] else 1
+    outline = 0 if sty["sub_bg"] else 2
+    back = (_ass_color(sty["sub_bgcolor"], sty["sub_bgop"])
+            if sty["sub_bg"] else "&H00000000")
+    lines = [
+        "[Script Info]",
+        "ScriptType: v4.00+",
+        f"PlayResX: {W}",
+        f"PlayResY: {H}",
+        "",
+        "[V4+ Styles]",
+        ("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+         "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+         "Alignment, MarginL, MarginR, MarginV, Encoding"),
+        (f"Style: Dub,Padauk,{fs},{_ass_color(sty['sub_color'], 100)},"
+         f"&H000000FF,&H00000000,{back},0,0,0,0,100,100,0,0,{border},"
+         f"{outline},0,{align},24,24,30,1"),
+        "",
+        "[Events]",
+        ("Format: Layer, Start, End, Style, Name, MarginL, MarginR, "
+         "MarginV, Effect, Text"),
+    ]
+    for s in segments or []:
+        txt = str(s.get("text") or "").strip()
+        if not txt:
+            continue
+        txt = (txt.replace("{", "(").replace("}", ")")
+               .replace("\r", " ").replace("\n", "\\N"))
+        lines.append(
+            f"Dialogue: 0,{_ass_time(s.get('start', 0))},"
+            f"{_ass_time(s.get('end', 0))},Dub,,0,0,0,,{txt}")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    return path
+
+
+def _style_filtergraph(sty, ass_path, video_w):
+    """filter_complex string + output label. input 0=video, 1=logo (ရှိရင်)."""
+    parts = []
+    cur = "[0:v]"
+    n = [0]
+
+    def lab():
+        n[0] += 1
+        return f"[v{n[0]}]"
+
+    if sty["mirror"]:
+        o = lab()
+        parts.append(f"{cur}hflip{o}")
+        cur = o
+    if sty["blur"] > 0:
+        a, b, c, o = lab(), lab(), lab(), lab()
+        parts.append(f"{cur}split{a}{b}")
+        parts.append(f"{b}crop=w=iw:h=ih*0.20:x=0:y=ih*0.80,"
+                     f"gblur=sigma={max(1, int(sty['blur']))}{c}")
+        parts.append(f"{a}{c}overlay=0:H-h{o}")
+        cur = o
+    if sty["sub_on"] and ass_path:
+        o = lab()
+        esc = (ass_path.replace("\\", "/")
+               .replace(":", "\\:").replace("'", "\\'"))
+        parts.append(f"{cur}subtitles=filename='{esc}'{o}")
+        cur = o
+    if sty["logo_path"] and os.path.isfile(sty["logo_path"]):
+        lw = max(16, int(video_w * int(sty["logo_size"]) / 100.0))
+        pos = {"↖️ ဘယ်အပေါ်": "16:16", "↗️ ညာအပေါ်": "W-w-16:16",
+               "↙️ ဘယ်အောက်": "16:H-h-16",
+               "↘️ ညာအောက်": "W-w-16:H-h-16"}.get(sty["logo_pos"], "W-w-16:16")
+        o = lab()
+        parts.append(f"[1:v]scale={lw}:-1,format=rgba[logo]")
+        parts.append(f"{cur}[logo]overlay={pos}{o}")
+        cur = o
+    return ";".join(parts), cur
+
+
+def apply_video_style(in_mp4, out_mp4, sty, segments):
+    """_stage video ပေါ် style apply (re-encode) → out_mp4."""
+    W, H = _video_dims(in_mp4)
+    ass_path = None
+    if sty["sub_on"]:
+        ass_path = os.path.join(os.path.dirname(out_mp4) or ".", "burn.ass")
+        _write_ass(segments or [], sty, ass_path, (W, H))
+    graph, vout = _style_filtergraph(sty, ass_path, W)
+    cmd = ["ffmpeg", "-y", "-v", "error", "-i", in_mp4]
+    if sty["logo_path"] and os.path.isfile(sty["logo_path"]):
+        cmd += ["-i", sty["logo_path"]]
+    cmd += ["-filter_complex", graph, "-map", vout, "-map", "0:a?",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+            "-c:a", "copy", "-movflags", "+faststart", out_mp4]
+    run(cmd)
+    return out_mp4
+
+
+def _style_preview(video_path, sty, t, out_jpg, sample_text, duration):
+    """Live preview: အချိန် t က frame တစ်ခု style အပြည့်နဲ့ ထုတ် (720px)."""
+    W, H = _video_dims(video_path)
+    ass_path = None
+    if sty["sub_on"]:
+        ass_path = out_jpg + ".ass"
+        _write_ass([{"start": 0.0, "end": max(1.0, float(duration or 1.0)),
+                     "text": sample_text}], sty, ass_path, (W, H))
+    graph, vout = _style_filtergraph(sty, ass_path, W)
+    graph = (graph + ";" if graph else "") + f"{vout}scale=720:-2[pv]"
+    cmd = ["ffmpeg", "-y", "-v", "error", "-ss", f"{float(t):.2f}",
+           "-i", video_path]
+    if sty["logo_path"] and os.path.isfile(sty["logo_path"]):
+        cmd += ["-i", sty["logo_path"]]
+    cmd += ["-filter_complex", graph, "-map", "[pv]",
+            "-frames:v", "1", "-q:v", "3", out_jpg]
+    run(cmd)
+    return out_jpg
+
+
 # ------------------------------------------------- 🎬 Recap Studio render engine
 # အလုပ်လုပ်ပုံ: narration (TTS) ကို အချိန်ကွက်ထဲ အတင်းမထည့်ဘဲ သဘာဝအတိုင်းထား →
 # video အပိုင်းတစ်ခုချင်းစီကို သူ့ narration အရှည်နဲ့ကိုက်အောင် setpts နဲ့
@@ -3271,10 +3452,101 @@ def _init_state(st):
         "work_mode": "🎬+🎙️ Recap + Dub Mode",
         # 🎚️ voice speed multiplier (1.0 = ပုံမှန်)
         "voice_speed": 1.0,
+        # 🎨 video style (step 6 panel)
+        "vs_mirror": False, "vs_blur": 0, "vs_sub_on": True,
+        "vs_sub_size": 4.5, "vs_sub_color": "#FFFFFF", "vs_sub_bg": True,
+        "vs_sub_bgcolor": "#000000", "vs_sub_bgop": 60,
+        "vs_sub_pos": "⬇️ အောက်", "vs_logo_path": "",
+        "vs_logo_pos": "↗️ ညာအပေါ်", "vs_logo_size": 12,
+        "vs_preview_t": 1.0,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
+
+
+def _video_style_panel(S):
+    """🎨 Step 6 style panel: mirror/blur/subtitle/logo + 👁️ live preview.
+
+    settings အားလုံး vs_* session keys နဲ့ သိမ်း — render က
+    _current_video_style(S) နဲ့ ပြန်ဖတ်တယ်.
+    """
+    import streamlit as st
+    st.markdown("##### 🎨 Video Style — render မလုပ်ခင် ပြင်ရန်")
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        st.checkbox("🪞 Mirror — ဘယ်/ညာ ပြောင်းပြန်", key="vs_mirror",
+                    help="Copyright bypass အတွက် သုံးတတ်တယ်")
+        st.slider("🌫️ Blur — မူရင်း subtitle နေရာဖုံး (အောက်ပိုင်း 20%)",
+                  0, 40, key="vs_blur",
+                  help="0 = မဖုံး. မူရင်း hardcoded subtitle တွေကို ဖုံးဖို့ "
+                       "အောက်ပိုင်းကို မှုန်ဝါးပေးမယ်")
+        st.selectbox("💬 Subtitle နေရာ",
+                     ["⬇️ အောက်", "⏺ အလယ်", "⬆️ အပေါ်"], key="vs_sub_pos")
+    with _c2:
+        st.checkbox("💬 မြန်မာ Subtitle ထည့် (burn-in)", key="vs_sub_on")
+        st.slider("🔠 Subtitle Size (%)", 3.0, 9.0, step=0.5,
+                  key="vs_sub_size", help="video အမြင့်ရဲ့ % — ကြီးလေ စာကြီးလေ")
+        _scc1, _scc2 = st.columns(2)
+        with _scc1:
+            st.color_picker("🎨 စာအရောင်", key="vs_sub_color")
+        with _scc2:
+            st.color_picker("⬛ နောက်ခံအရောင်", key="vs_sub_bgcolor")
+        st.checkbox("⬛ Subtitle နောက်ခံ (box) ထည့်", key="vs_sub_bg")
+        st.slider("◐ နောက်ခံ Opacity (%)", 0, 100, key="vs_sub_bgop",
+                  help="100 = အပြည့်မှုတ်, 0 = ပျောက်ကွယ်")
+    # 🖼️ logo
+    _lu = st.file_uploader("🖼️ Logo တင်ရန် (PNG/JPG)", type=["png", "jpg", "jpeg"],
+                           key="vs_logo_up")
+    if _lu is not None and S.get("_vs_logo_name") != _lu.name:
+        _lp = os.path.join(WORK_DIR, S.run_id,
+                           "logo" + os.path.splitext(_lu.name)[1].lower())
+        with open(_lp, "wb") as _f:
+            _f.write(_lu.getbuffer())
+        S["vs_logo_path"] = _lp
+        S["_vs_logo_name"] = _lu.name
+    if S.get("vs_logo_path") and os.path.isfile(S["vs_logo_path"]):
+        _lc1, _lc2, _lc3 = st.columns([2, 2, 1])
+        with _lc1:
+            st.selectbox("📍 Logo နေရာ",
+                         ["↖️ ဘယ်အပေါ်", "↗️ ညာအပေါ်", "↙️ ဘယ်အောက်", "↘️ ညာအောက်"],
+                         key="vs_logo_pos")
+        with _lc2:
+            st.slider("🔍 Logo Size (video အကျယ် %)", 5, 30, key="vs_logo_size")
+        with _lc3:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🗑️ Logo ဖယ်", key="vs_logo_clear"):
+                S["vs_logo_path"] = ""
+                S["_vs_logo_name"] = ""
+                st.rerun()
+    # 👁️ live preview
+    if S.video_path and os.path.isfile(S.video_path):
+        _maxv = max(1.0, float(S.duration or 1.0))
+        if float(S.get("vs_preview_t") or 1.0) > _maxv:
+            S["vs_preview_t"] = 1.0
+        st.slider("👁️ Preview အချိန် (စက္ကန့်)", 0.0, _maxv, step=0.5,
+                  key="vs_preview_t")
+        _sty = _current_video_style(S)
+        _sample = "နမူနာ စာတန်း"
+        for _sg in (S.final_segments or []):
+            if float(_sg.get("start", 0)) <= float(S.get("vs_preview_t") or 0) \
+                    <= float(_sg.get("end", 0)):
+                _sample = str(_sg.get("text") or _sample)
+                break
+        _hk = hashlib.md5(json.dumps(
+            [S.video_path, S.get("vs_preview_t"), _sty],
+            sort_keys=True, default=str).encode()).hexdigest()[:12]
+        _jpg = os.path.join(WORK_DIR, S.run_id, f"preview_{_hk}.jpg")
+        if not os.path.isfile(_jpg):
+            try:
+                _style_preview(S.video_path, _sty,
+                               float(S.get("vs_preview_t") or 1.0),
+                               _jpg, _sample, S.duration)
+            except Exception as _e:
+                st.caption(f"Preview ထုတ်မရဘူး: {_e}")
+        if os.path.isfile(_jpg):
+            st.image(_jpg, caption="👁️ Live Preview — setting ချိန်တိုင်း ပြမယ်",
+                     use_container_width=True)
 
 
 def main():
@@ -3485,7 +3757,7 @@ def main():
                  recap=recap_render)
         st.markdown(
             '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.5</span></div>",
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.6</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -4185,6 +4457,8 @@ def main():
         st.caption("🏷️ Mode: " + ("🎬 Recap — video ကို narration နဲ့ကိုက်အောင် ချိန်မယ်"
                                    if recap_render else
                                    "🎙️ Dubbing — အသံကို မူရင်းအချိန်ကွက်ထဲ ထည့်မယ်"))
+        if is_video and (S.final_segments or S.fitted):
+            _video_style_panel(S)
         # recap render မုဒ်ဆို အဆင့် ၅ (fit) မလိုဘူး — သဘာဝအသံကနေ တိုက်ရိုက်တွက်မယ်
         _can_render = bool(S.fitted) or (recap_render and bool(S.final_segments))
         if not _can_render:
@@ -4261,6 +4535,12 @@ def main():
                             S.recap_timeline, S.recap_report, S.out_subs = None, None, None
                             _stage = out
                             _subs = [dict(s) for s in S.final_segments]
+                        # 🎨 video style (mirror/blur/subtitle/logo) — speedup မတိုင်ခင်
+                        _sty6 = _current_video_style(S)
+                        if _style_active(_sty6):
+                            _styled = os.path.join(WORK_DIR, S.run_id, "styled.mp4")
+                            apply_video_style(_stage, _styled, _sty6, _subs)
+                            _stage = _styled
                         # ⚡ speed-up (download မချခင် — video+audio အတူ, sync မပျက်)
                         if speedup > 1.0:
                             _spd = os.path.join(WORK_DIR, S.run_id, "spedup.mp4")
@@ -4364,7 +4644,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.5</span></div>",
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.6</span></div>",
         unsafe_allow_html=True)
 
 
