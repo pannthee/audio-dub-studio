@@ -57,185 +57,134 @@ os.makedirs(WORK_DIR, exist_ok=True)
 
 # ---------------------------------------------------------- 🕷️ Spider-Man theme
 _SPIDEY_CSS = """<style>
-/* --- နောက်ခံ: midnight navy + soft glows --- */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap');
+
+/* --- နောက်ခံ: deep emerald-black + emerald/gold glows --- */
 .stApp {
-    background-color: #0B0E17;
+    background-color: #060B09;
     background-image:
-        radial-gradient(900px 420px at 85% -5%, rgba(56,189,248,.10), transparent 60%),
-        radial-gradient(760px 480px at 5% 105%, rgba(129,140,248,.10), transparent 60%);
+        radial-gradient(1000px 460px at 88% -5%, rgba(16,185,129,.13), transparent 60%),
+        radial-gradient(820px 520px at 3% 108%, rgba(245,196,81,.07), transparent 60%),
+        radial-gradient(700px 380px at 45% 115%, rgba(16,185,129,.06), transparent 65%);
     background-repeat: no-repeat;
+    font-family: 'Manrope', sans-serif;
 }
 
-/* --- hero --- */
-.spidey-hero { text-align: center; padding: 22px 0 6px; }
-.spidey-kicker { color: #7DD3FC; font-size: .78rem; letter-spacing: 4px; font-weight: 700; }
-.spidey-title {
-    font-size: 3rem; letter-spacing: 1px; font-weight: 900;
-    background: linear-gradient(120deg, #E0F2FE 20%, #38BDF8 55%, #818CF8 90%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin: 4px 0;
+/* --- hero: framed banner panel (left-aligned) --- */
+.spidey-hero {
+    text-align: left; padding: 26px 30px 20px; margin: 6px 0 4px;
+    border-radius: 20px;
+    background: linear-gradient(150deg, rgba(16,185,129,.12), rgba(255,255,255,.02) 55%, rgba(245,196,81,.07));
+    border: 1px solid rgba(52,211,153,.30);
+    box-shadow: 0 16px 38px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07);
 }
-.spidey-sub { color: #A5B4D4; font-size: 1rem; margin-top: 8px; }
-@media (max-width: 640px){ .spidey-title{ font-size: 2.1rem; } }
+.spidey-kicker {
+    display: inline-block; color: #F5C451; font-size: .74rem; letter-spacing: 3.5px;
+    font-weight: 800; padding: 4px 13px; border-radius: 999px;
+    background: rgba(245,196,81,.09); border: 1px solid rgba(245,196,81,.40);
+}
+.spidey-title {
+    font-family: 'Manrope', sans-serif;
+    font-size: 3rem; letter-spacing: .5px; font-weight: 800;
+    background: linear-gradient(115deg, #A7F3D0 10%, #34D399 48%, #F5C451 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin: 8px 0 2px;
+}
+.spidey-sub { color: #A9BFAF; font-size: 1rem; margin-top: 6px; }
+@media (max-width: 640px){ .spidey-title{ font-size: 2.1rem; } .spidey-hero{ padding: 20px 18px 14px; } }
 
 /* --- အဆင့်ခြေရာ (step tracker) --- */
 .spidey-steps { display: flex; gap: 8px; margin: 16px 0 6px; flex-wrap: wrap; }
 .spidey-step { flex: 1 1 0; min-width: 96px; text-align: center; padding: 9px 4px;
-    border-radius: 14px; font-size: .8rem; font-weight: 700;
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); color: #8B94B3; }
+    border-radius: 12px; font-size: .8rem; font-weight: 700;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(167,243,208,.14); color: #8CA695; }
 .spidey-step .n { display: block; font-size: 1.1rem; margin-bottom: 2px; }
-.spidey-step.done { background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.55); color: #BAE6FD; }
-.spidey-step.current { background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
-    border-color: #7DD3FC; box-shadow: 0 0 18px rgba(56,189,248,.45); }
+.spidey-step.done { background: rgba(245,196,81,.10); border-color: rgba(245,196,81,.5); color: #FDE9B8; }
+.spidey-step.current { background: linear-gradient(135deg,#059669,#10B981); color: #fff;
+    border-color: #6EE7B7; box-shadow: 0 0 18px rgba(16,185,129,.5); }
 .spidey-step.skip { opacity: .4; }
 
 /* --- ကတ် (st.container(border=True) အစစ်) --- */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(17,22,38,.78);
-    border: 1px solid rgba(56,189,248,.22) !important;
-    border-radius: 18px;
-    box-shadow: 0 8px 28px rgba(0,0,0,.5);
+    background: rgba(10,19,15,.86);
+    border: 1px solid rgba(52,211,153,.22) !important;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.55);
 }
 .spidey-stephead {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 16px; margin-bottom: 6px;
-    background: linear-gradient(90deg, rgba(56,189,248,.16), rgba(129,140,248,.10));
-    border: 1px solid rgba(56,189,248,.22);
+    background: linear-gradient(90deg, rgba(16,185,129,.18), rgba(245,196,81,.08));
+    border: 1px solid rgba(52,211,153,.25);
     border-radius: 12px;
     font-size: 1.12rem; font-weight: 800; color: #fff;
 }
 .spidey-num { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg,#0EA5E9,#6366F1); color: #fff;
-    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(56,189,248,.55); }
+    background: linear-gradient(135deg,#F5C451,#D97706); color: #231a04;
+    font-weight: 800; font-size: 1.05rem; box-shadow: 0 0 14px rgba(245,196,81,.5); }
 
 /* --- ခလုတ် --- */
 div[data-testid*="stBaseButton-primary"] > button, .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #0EA5E9, #6366F1) !important;
+    background: linear-gradient(135deg, #059669, #10B981) !important;
     color: #fff !important; border: none !important; border-radius: 12px !important;
     font-weight: 800 !important; letter-spacing: .3px;
-    box-shadow: 0 4px 20px rgba(56,189,248,.35) !important;
+    box-shadow: 0 4px 20px rgba(16,185,129,.35) !important;
 }
 div[data-testid*="stBaseButton-primary"] > button:hover, .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 6px 28px rgba(56,189,248,.6) !important;
+    box-shadow: 0 6px 28px rgba(16,185,129,.6) !important;
     transform: translateY(-1px); color: #fff !important;
 }
 .stButton > button[kind="secondary"], div[data-testid*="stBaseButton-secondary"] > button {
-    border: 1px solid rgba(125,211,252,.4) !important; border-radius: 12px !important;
-    background: rgba(56,189,248,.07) !important; color: #C4D7F5 !important; font-weight: 700 !important;
+    border: 1px solid rgba(245,196,81,.45) !important; border-radius: 12px !important;
+    background: rgba(245,196,81,.06) !important; color: #EDE3C2 !important; font-weight: 700 !important;
 }
 .stButton > button[kind="secondary"]:hover, div[data-testid*="stBaseButton-secondary"] > button:hover {
-    background: rgba(56,189,248,.16) !important; color: #fff !important;
-    box-shadow: 0 0 16px rgba(56,189,248,.35) !important; border-color: #7DD3FC !important;
+    background: rgba(245,196,81,.14) !important; color: #fff !important;
+    box-shadow: 0 0 16px rgba(245,196,81,.3) !important; border-color: #F5C451 !important;
 }
 
 /* --- sidebar --- */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0D1220 0%, #0B0E17 70%) !important;
-    border-right: 1px solid rgba(56,189,248,.20);
+    background: linear-gradient(180deg, #0A120E 0%, #060B09 70%) !important;
+    border-right: 1px solid rgba(52,211,153,.18);
 }
-section[data-testid="stSidebar"] h3 { border-left: 4px solid #38BDF8; padding-left: 10px !important; }
-section[data-testid="stSidebar"] h4 { color: #7DD3FC !important; }
+section[data-testid="stSidebar"] h3 { border-left: 4px solid #F5C451; padding-left: 10px !important; }
+section[data-testid="stSidebar"] h4 { color: #F5C451 !important; }
 
 /* --- တခြား --- */
-div[data-testid="stExpander"] { border: 1px solid rgba(56,189,248,.22); border-radius: 14px;
-    background: rgba(56,189,248,.04); }
-div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(56,189,248,.45); border-radius: 16px;
-    background: rgba(56,189,248,.04); padding: 10px; }
+div[data-testid="stExpander"] { border: 1px solid rgba(52,211,153,.22); border-radius: 14px;
+    background: rgba(16,185,129,.04); }
+div[data-testid="stFileUploader"] { border: 1.5px dashed rgba(52,211,153,.45); border-radius: 16px;
+    background: rgba(16,185,129,.04); padding: 10px; }
 div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
-    border-color: #38BDF8 !important;
-    box-shadow: 0 0 0 1px #38BDF8, 0 0 14px rgba(56,189,248,.35) !important; }
-div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(56,189,248,.6); }
-.spidey-dl-label { font-weight: 800; color: #BAE6FD; margin: 6px 0 10px; font-size: 1rem; }
-.spidey-foot { text-align: center; color: #5A6480; font-size: .8rem; padding: 20px 0 8px; }
+    border-color: #10B981 !important;
+    box-shadow: 0 0 0 1px #10B981, 0 0 14px rgba(16,185,129,.35) !important; }
+div[data-testid="stProgress"] > div > div { box-shadow: 0 0 12px rgba(16,185,129,.6); }
+.spidey-dl-label { font-weight: 800; color: #FDE9B8; margin: 6px 0 10px; font-size: 1rem; }
+.spidey-foot { text-align: center; color: #5F7267; font-size: .8rem; padding: 20px 0 8px; }
 </style>"""
 
 # ---------------------------------------------------------- ✨ Premium overrides
 # midnight theme အပေါ် premium အလွှာ — glass cards, gradient buttons,
 # glow accents, refined inputs/sidebar. နောက်မှ load လုပ်လို့ cascade နိုင်တယ်.
 _PREMIUM_CSS = """<style>
-/* --- app background: deeper navy + layered glows --- */
-.stApp {
-    background:
-        radial-gradient(1100px 500px at 85% -10%, rgba(56,189,248,.14), transparent 60%),
-        radial-gradient(900px 560px at 0% 110%, rgba(129,140,248,.12), transparent 60%),
-        radial-gradient(600px 300px at 50% 45%, rgba(56,189,248,.05), transparent 70%),
-        #070A12;
+/* --- emerald+gold accents: progress gradient, focus, scrollbar, lift --- */
+div[data-testid="stProgress"] > div > div > div {
+    background: linear-gradient(90deg, #10B981, #F5C451) !important;
+    border-radius: 999px !important;
 }
-/* --- hero: badge kicker + glowing gradient title --- */
-.spidey-kicker {
-    display: inline-block; padding: 4px 14px; border-radius: 999px;
-    background: rgba(56,189,248,.10); border: 1px solid rgba(56,189,248,.35);
-    color: #7DD3FC !important;
-}
-.spidey-title {
-    filter: drop-shadow(0 6px 24px rgba(56,189,248,.35));
-}
-.spidey-sub { color: #94A3C4 !important; }
-/* --- cards: glass + soft shadow --- */
-.spidey-card {
-    background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.02)) !important;
-    border: 1px solid rgba(148,163,216,.18) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 18px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06) !important;
-    backdrop-filter: blur(6px);
-}
-/* --- buttons: gradient + lift on hover --- */
 div.stButton > button, div.stDownloadButton > button {
-    border-radius: 12px !important; font-weight: 600 !important;
-    border: 1px solid rgba(148,163,216,.25) !important;
     transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
 }
 div.stButton > button:hover, div.stDownloadButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 22px rgba(56,189,248,.25) !important;
-    filter: brightness(1.08);
+    transform: translateY(-1px); filter: brightness(1.07);
 }
-div.stButton > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {
-    background: linear-gradient(120deg, #0EA5E9, #6366F1) !important;
-    border: none !important; color: #fff !important;
-    box-shadow: 0 10px 26px rgba(56,189,248,.35) !important;
-}
-/* --- inputs: rounded + cyan focus ring --- */
-div[data-baseweb="input"] > div, div[data-baseweb="select"] > div,
-div[data-baseweb="textarea"] > div {
-    border-radius: 12px !important;
-    border-color: rgba(148,163,216,.25) !important;
-    background: rgba(255,255,255,.03) !important;
-}
-div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within,
-div[data-baseweb="textarea"] > div:focus-within {
-    border-color: #38BDF8 !important;
-    box-shadow: 0 0 0 3px rgba(56,189,248,.22) !important;
-}
-/* --- sidebar: dark glass --- */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, rgba(19,24,38,.97), rgba(10,13,23,.97)) !important;
-    border-right: 1px solid rgba(148,163,216,.15) !important;
-}
-section[data-testid="stSidebar"] h3, section[data-testid="stSidebar"] h4 {
-    letter-spacing: .4px;
-}
-/* --- progress bar: gradient --- */
-div[data-testid="stProgress"] > div > div > div {
-    background: linear-gradient(90deg, #38BDF8, #818CF8) !important;
-    border-radius: 999px !important;
-}
-/* --- step pills: current glows cyan --- */
-.spidey-step.current {
-    background: linear-gradient(135deg, #0EA5E9, #6366F1) !important;
-    border-color: rgba(125,211,252,.8) !important;
-    box-shadow: 0 0 18px rgba(56,189,248,.55) !important;
-}
-/* --- expander / alerts: softer corners --- */
-div[data-testid="stExpander"] { border-radius: 14px !important;
-    border-color: rgba(148,163,216,.18) !important; }
 div[data-testid="stAlert"] { border-radius: 14px !important; }
-/* --- scrollbar --- */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(125,211,252,.25); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: rgba(52,211,153,.28); border-radius: 999px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::selection { background: rgba(56,189,248,.35); }
+::selection { background: rgba(245,196,81,.35); }
 </style>"""
 
 
@@ -891,12 +840,13 @@ _TIKTOK_SYS = (
     "You are a TikTok content assistant for a Burmese-dubbed Chinese drama channel. "
     "The user will paste your image prompt into an AI image app (Flow) to make a 9:16 poster, "
     "and post the caption on TikTok. "
-    "Respond with STRICT JSON only: {\"caption\": str, \"hashtags\": [str], "
+    "Respond with STRICT JSON only: {\"captions\": [str, str, str], \"hashtags\": [str], "
     "\"poster_title\": str, \"poster_sub\": str, \"poster_prompt\": str}. "
     "Rules: "
-    "caption = ONE punchy Burmese hook line (under 60 chars) that stops scrollers, no hashtags inside. "
-    "hashtags = 8-12 TikTok hashtags WITH the # symbol, the kind Myanmar movie-recap creators "
-    "actually use (mix broad and niche drama/recap tags). "
+    "captions = THREE different punchy Burmese hook lines (each under 60 chars) that stop "
+    "scrollers, no hashtags inside — vary the angle (emotional, curiosity-gap, dramatic). "
+    "hashtags = EXACTLY 5 hashtags in ENGLISH only, WITH the # symbol — the kind of tags "
+    "movie-recap channels use (mix broad reach tags and niche drama/recap tags). "
     "poster_title = short Burmese poster title (under 25 chars), dramatic. "
     "poster_sub = Burmese sub-line like 'episode {N} + short hook' using the filename hint for N. "
     "poster_prompt = English image prompt for a 9:16 vertical cinematic movie poster of the single "
@@ -918,7 +868,7 @@ def _copy_button(text, key):
     js_text = json.dumps(text or "")
     components.html(
         '<button id="cpbtn_%s" title="Copy" style="font-size:20px;cursor:pointer;'
-        'background:#1f2937;color:#fff;border:1px solid #4b5563;border-radius:10px;'
+        'background:#0B1512;color:#fff;border:1px solid #10B981;border-radius:10px;'
         'padding:6px 10px;">&#128203;</button>'
         '<script>document.getElementById("cpbtn_%s").onclick = async function(){'
         'var b=this;try{await navigator.clipboard.writeText(%s);'
@@ -951,13 +901,87 @@ def _tiktok_pack(api_key, model_id, segments, dl_base, setting_hint=""):
         spec += ('. No other text in the image. If Burmese script cannot be rendered '
                  'cleanly, leave the top third empty instead.')
         prompt = (prompt + spec).strip()
+    caps = data.get("captions") or []
+    if isinstance(caps, str):
+        caps = [caps]
+    if not caps and data.get("caption"):
+        caps = [data["caption"]]  # backward compat (old single-caption format)
+    captions = [str(c).strip() for c in caps if str(c).strip()][:3]
     return {
-        "caption": str(data.get("caption") or "").strip(),
-        "hashtags": [str(t).strip() for t in tags if str(t).strip()][:14],
+        "captions": captions,
+        "caption": captions[0] if captions else "",
+        "hashtags": [str(t).strip() for t in tags if str(t).strip()][:5],
         "poster_title": title,
         "poster_sub": sub,
         "poster_prompt": prompt,
     }
+
+
+def _tiktok_ui(S, api_key, model_id, is_video, do_ckpt=True):
+    """📱 Social ပေါ်တင်ရန် — caption ၃ ခု + English hashtag ၅ ခု + Flow poster prompt.
+
+    Manual step 6 ရော Auto ရလဒ် ရော ဒါကိုပဲ သုံး. မကြိုက်ရင် Retry နှိပ် —
+    အသစ်ပြန်ထုတ်ပေးမယ်. တစ်ခုချင်းစီမှာ 📋 Copy ခလုတ် ပါတယ်.
+    """
+    import streamlit as st
+    segments = S.get("out_subs") or S.get("final_segments")
+    if not segments:
+        return
+    st.markdown("---")
+    st.markdown("### 📱 Social ပေါ်တင်ရန်")
+    st.caption("Caption ၃ ခု + English hashtag ၅ ခု + Flow AI poster prompt — "
+               "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
+    _tt_setting = st.text_input("🏯 Background setting",
+        value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
+        help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
+        key="tiktok_setting_input")
+    S["_tt_setting"] = _tt_setting
+    _gen_label = ("🔁 Retry — Caption အသစ် ပြန်ထုတ်" if S.get("tiktok_pack")
+                  else "✨ Caption + Hashtag ထုတ်ရန်")
+    if st.button(_gen_label, type="primary",
+                 use_container_width=True, key="tiktok_gen_btn"):
+        if not api_key:
+            st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
+        else:
+            with st.spinner("Caption ထုတ်နေတယ်..."):
+                try:
+                    S.tiktok_pack = _tiktok_pack(
+                        api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
+                        segments, S.get("dl_base"),
+                        setting_hint=_tt_setting)
+                    S["_tt_gen"] = S.get("_tt_gen", 0) + 1
+                    if do_ckpt:
+                        _manual_ckpt_save(S, is_video)
+                except Exception as e:
+                    st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
+    _tp = S.get("tiktok_pack")
+    if _tp:
+        _tg = S.get("_tt_gen", 0)
+
+        def _tt_row(label, value, area_key, copy_key, height=None):
+            _c1, _c2 = st.columns([6, 1])
+            with _c1:
+                if height:
+                    st.text_area(label, value, height=height, key=area_key)
+                else:
+                    st.text_area(label, value, key=area_key)
+            with _c2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                _copy_button(S.get(area_key, ""), copy_key)
+
+        for _ci, _cap in enumerate(_tp.get("captions") or [], 1):
+            _tt_row(f"📝 Caption {_ci}",
+                    _cap, f"tt_caption_{_tg}_{_ci}",
+                    f"tt_copy_cap_{_tg}_{_ci}")
+        _tt_row("#️⃣ Hashtags (English)",
+                " ".join(_tp.get("hashtags", "") or []),
+                f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
+        _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
+        if _pt or _ps:
+            st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
+        _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
+                _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
+                f"tt_copy_prm_{_tg}", height=180)
 
 
 def merge_tiny_segments(segments, max_gap=0.5, min_slot=6.0, max_merged=12.0):
@@ -2939,6 +2963,11 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
                    "(ဘယ်ဘက် sidebar)။")
     if not api_key:
         st.warning("⚠️ Gemini API key ထည့်မှ ဘာသာပြန်လို့ရမယ် (ဘယ်ဘက် sidebar)။")
+    st.caption("🏷️ Mode: " + ("🎬 Recap — အသံ သဘာဝအတိုင်း, video ကို အသံနဲ့"
+                               "ကိုက်အောင် ချိန်မယ်" if recap else
+                               "🎙️ Dubbing — အသံကို မူရင်းအချိန်ကွက်ထဲ ထည့်မယ်, "
+                               "video မပြောင်း") +
+               " (ပြောင်းချင်ရင် sidebar → ⚙️ Mode)")
     _go = st.button("⚡ တစ်ချက်နှိပ်ပြီး အပြီးလုပ်", type="primary",
                     use_container_width=True,
                     disabled=not (S.video_path and _has_keys))
@@ -2949,7 +2978,7 @@ def _auto_ui(S, api_key, groq_key, assembly_key, model_id, voice,
     _spidey_card_close()
     # --- ရလဒ်
     if S.get("auto_done") and S.out_mp4 and os.path.isfile(S.out_mp4):
-        _auto_results(S)
+        _auto_results(S, api_key, model_id)
 
 
 def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
@@ -3160,6 +3189,7 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
                 _ckpt_save(rid, "s5_final_dub",
                            {"out_mp4": out, "amp3": amp3, "subs": subs})
         S.out_mp4, S.out_subs, S.auto_mp3 = out, subs, amp3
+        S["auto_ran_mode"] = "🎬 Recap Mode" if recap else "🎙️ Dubbing Mode"
         S.auto_done = True
         setp(1.0, "✅ ပြီးပြီ!")
     except Exception as e:
@@ -3176,10 +3206,12 @@ def _auto_run(S, api_key, groq_key, assembly_key, model_id, voice,
 
 
 
-def _auto_results(S):
-    """Auto ရလဒ်: quality report + MP4 ခလုတ်အကြီး + MP3/SRT အသေး."""
+def _auto_results(S, api_key="", model_id=""):
+    """Auto ရလဒ်: mode badge + quality report + MP4 ခလုတ်အကြီး + MP3/SRT + social pack."""
     import streamlit as st
     st.success("✅ Auto ပြီးပြီ! အောက်မှာ download ချလို့ရပြီ")
+    if S.get("auto_ran_mode"):
+        st.caption(f"🏷️ ဒီ video ကို {S['auto_ran_mode']} နဲ့ ထုတ်ထားတယ်")
     st.video(S.out_mp4)  # ⬇️ မဒေါင်းခင် preview အရင်ကြည့်
     qc = S.get("auto_report") or {}
     if qc.get("checked"):
@@ -3218,6 +3250,8 @@ def _auto_results(S):
         st.download_button("⬇️ SRT", segments_to_srt(S.out_subs or []),
                            file_name=f"{_dl}.srt", mime="text/plain",
                            use_container_width=True)
+    # 📱 social pack — caption ၃ ခု + English hashtag ၅ ခု (Retry + Copy ပါ)
+    _tiktok_ui(S, api_key, model_id, True, do_ckpt=False)
 
 
 # ------------------------------------------------------------------ UI
@@ -3437,7 +3471,7 @@ def main():
     # ---------------------------------------------------------- main
     st.markdown(
         '<div class="spidey-hero">'
-        '<div class="spidey-kicker">🎙️ AI DUBBING STUDIO</div>'
+        '<div class="spidey-kicker">🎙️ PREMIUM AI DUBBING STUDIO</div>'
         '<div class="spidey-title">Audio Dub Studio</div>'
         '<div class="spidey-sub">ဗီဒီယို / SRT → မြန်မာအသံ — မူရင်းအချိန်အတိုင်း</div>'
         "</div>",
@@ -3451,7 +3485,7 @@ def main():
                  recap=recap_render)
         st.markdown(
             '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.4</span></div>",
+            "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.5</span></div>",
             unsafe_allow_html=True)
         return
 
@@ -3998,6 +4032,12 @@ def main():
         _spidey_card_open(5, "မြန်မာအသံထုတ် + အချိန်ချိန်")
         if not S.final_segments:
             st.caption("အရင်ဆုံး အဆင့် ၄ မှာ စာသားအတည်ပြုပါ။")
+        elif recap_render:
+            st.info("🎬 Recap Mode — ဒီအဆင့်မှာ အသံ fit လုပ်စရာ မလိုဘူး။ "
+                    "အသံကို သဘာဝအတိုင်း အဆင့် ၆ မှာ ထုတ်ပြီး video ကို "
+                    "အသံနဲ့ကိုက်အောင် ချိန်ပေးမယ်။")
+            st.caption("အောက်က «ဆက်သွား ▶️» နှိပ်ပြီး အဆင့် ၆ မှာ "
+                       "«🎞️ Recap render» ကို နှိပ်ပါ။")
         else:
             st.caption("အသံတစ်ကြောင်းချင်းကို သူ့အချိန်ကွက်ထဲ အတိအကျထည့်မယ် — "
                        f"ရှည်ရင် {max_speed}x အထိ မြန်ပေးမယ်၊ နောက်အပိုင်းနဲ့ ဘယ်တော့မှ မထပ်စေဘူး။")
@@ -4142,10 +4182,14 @@ def main():
         # ---- အဆင့် ၆: assemble + download
         _spidey_card_open(6, "ဗီဒီယိုနဲ့ပေါင်း + Download"
                           if is_video else "အသံဖိုင် Download")
+        st.caption("🏷️ Mode: " + ("🎬 Recap — video ကို narration နဲ့ကိုက်အောင် ချိန်မယ်"
+                                   if recap_render else
+                                   "🎙️ Dubbing — အသံကို မူရင်းအချိန်ကွက်ထဲ ထည့်မယ်"))
         # recap render မုဒ်ဆို အဆင့် ၅ (fit) မလိုဘူး — သဘာဝအသံကနေ တိုက်ရိုက်တွက်မယ်
         _can_render = bool(S.fitted) or (recap_render and bool(S.final_segments))
         if not _can_render:
-            st.caption("အရင်ဆုံး အဆင့် ၅ မှာ အသံထုတ်ပါ။")
+            st.caption("အရင်ဆုံး အဆင့် ၄ မှာ စာသားအတည်ပြုပါ။" if recap_render
+                       else "အရင်ဆုံး အဆင့် ၅ မှာ အသံထုတ်ပါ။")
         else:
             if is_video:
                 _bc6, _ = st.columns([1, 2])
@@ -4285,60 +4329,10 @@ def main():
                     st.download_button("⬇️ SRT", segments_to_srt(_srt_segs),
                                        file_name=f"{_dl}.srt", mime="text/plain",
                                        use_container_width=True)
-            # ---- 📱 TikTok ထုတ်ရန်: caption + hashtag + Flow poster prompt
+            # ---- 📱 Social pack: caption ၃ ခု + English hashtag ၅ ခု + poster prompt
             # (Gemini စာနဲ့ပဲ ထုတ်တာ — အခမဲ့; ပုံကို Flow ထဲမှာ ကိုယ်တိုင်ထုတ်)
             if S.final_segments:
-                st.markdown("---")
-                st.markdown("### 📱 TikTok ထုတ်ရန်")
-                st.caption("Caption + hashtag + Flow AI poster prompt — "
-                           "dub ပြီးသားစာသားတွေကို ဖတ်ပြီး ထုတ်ပေးမယ်")
-                _tt_setting = st.text_input("🏯 Background setting",
-                    value=S.get("_tt_setting", "တရုတ်ဇာတ်လမ်း"),
-                    help="ပိုစတာ နောက်ခံ ဘယ်လိုပုံစံလဲ — ဇာတ်လမ်းနဲ့ လိုက်အောင်",
-                    key="tiktok_setting_input")
-                S["_tt_setting"] = _tt_setting
-                if st.button("✨ Caption + Prompt ထုတ်ရန်", type="primary",
-                             use_container_width=True, key="tiktok_gen_btn"):
-                    if not api_key:
-                        st.warning("⚠️ Gemini API key လိုတယ် (ဘယ်ဘက် sidebar)")
-                    else:
-                        with st.spinner("TikTok pack ထုတ်နေတယ်..."):
-                            try:
-                                S.tiktok_pack = _tiktok_pack(
-                                    api_key, model_id.strip() or GEMINI_MODEL_DEFAULT,
-                                    S.final_segments, S.get("dl_base"),
-                                    setting_hint=_tt_setting)
-                                S["_tt_gen"] = S.get("_tt_gen", 0) + 1
-                                _manual_ckpt_save(S, is_video)
-                            except Exception as e:
-                                st.error(f"ထုတ်တာ ပျက်သွားတယ်: {e}")
-                _tp = S.get("tiktok_pack")
-                if _tp:
-                    _tg = S.get("_tt_gen", 0)
-
-                    def _tt_row(label, value, area_key, copy_key, height=None):
-                        _c1, _c2 = st.columns([6, 1])
-                        with _c1:
-                            if height:
-                                st.text_area(label, value, height=height, key=area_key)
-                            else:
-                                st.text_area(label, value, key=area_key)
-                        with _c2:
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            _copy_button(S.get(area_key, ""), copy_key)
-
-                    _tt_row("📝 Caption (ထိထိမိမိ တစ်ကြောင်း)",
-                            _tp.get("caption", ""), f"tt_caption_{_tg}",
-                            f"tt_copy_cap_{_tg}")
-                    _tt_row("#️⃣ Hashtags",
-                            " ".join(_tp.get("hashtags", "") or []),
-                            f"tt_tags_{_tg}", f"tt_copy_tag_{_tg}")
-                    _pt, _ps = _tp.get("poster_title", ""), _tp.get("poster_sub", "")
-                    if _pt or _ps:
-                        st.caption(f"🖼️ ပုံထဲစာ: {_pt}" + (f" / {_ps}" if _ps else ""))
-                    _tt_row("🎨 Poster Prompt (Flow AI ထဲ paste)",
-                            _tp.get("poster_prompt", ""), f"tt_prompt_{_tg}",
-                            f"tt_copy_prm_{_tg}", height=180)
+                _tiktok_ui(S, api_key, model_id, is_video)
         _spidey_card_close()
     # ---- wizard အောက် nav: စာအပေါ်, ခလုတ် ၂ ခု ဘေးချင်းကပ်
     _cur = max(1, min(6, int(S.get("wizard_step", 1))))
@@ -4370,7 +4364,7 @@ def main():
             st.rerun()
     st.markdown(
         '<div class="spidey-foot">🎙️ Audio Dub Studio — '
-        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.4</span></div>",
+        "Create by Bo Bo Myint Mo <span style='opacity:.45'>• v2.5</span></div>",
         unsafe_allow_html=True)
 
 
